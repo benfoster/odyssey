@@ -13,3 +13,5 @@
 [] StreamRevision supports None which has the same behaviour as stream does not exists. This is currently not working.
 [] Helper for formatting event IDs {revision}@{streamId}
 [] Not sure we're getting value out of the expected revision vs using a ulong value and constants for values with meaning
+[] Model extensions (Aggregate + Repository)
+[] Review cosmos SDK performance tips - https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-dotnet-sdk-v3?tabs=trace-net-core

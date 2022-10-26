@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-ConsumerExample-eb14a0b7-c0b0-4bdf-9a8c-d42419f75daf</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1"/>
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.0"/>
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.0.0"/>
+    <PackageReference Include="Minid" Version="0.1.2"/>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Odyssey\Odyssey.csproj"/>
+  </ItemGroup>
+</Project>

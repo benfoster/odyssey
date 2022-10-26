@@ -8,7 +8,7 @@ using Newtonsoft.Json.Serialization;
 /// <summary>
 ///     Default <see cref="SerializerSettings"/> used across the project.
 /// </summary>
-internal static class SerializerSettings
+public static class SerializerSettings
 {
     /// <summary>
     ///     The default, and preferred, <see cref="SerializerSettings"/> to use.

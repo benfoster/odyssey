@@ -3,7 +3,7 @@ namespace Odyssey;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-internal sealed class CosmosEvent
+public sealed class CosmosEvent
 {
     [JsonProperty("id")]
     public string Id { get; set; } = null!;
