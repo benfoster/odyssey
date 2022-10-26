@@ -11,6 +11,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{B4D13052-5
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Odyssey.Tests", "test\Odyssey.Tests\Odyssey.Tests.csproj", "{152D5E33-78B8-4746-9B98-21829665FBF5}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{0AEF7AC3-3DE9-4AC1-B5AB-3C47E7E993F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiExample", "examples\ApiExample\ApiExample.csproj", "{C4497BA7-160A-495A-9695-CA8594E97D3E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,9 +32,14 @@ Global
 		{152D5E33-78B8-4746-9B98-21829665FBF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{152D5E33-78B8-4746-9B98-21829665FBF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{152D5E33-78B8-4746-9B98-21829665FBF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4497BA7-160A-495A-9695-CA8594E97D3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4497BA7-160A-495A-9695-CA8594E97D3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4497BA7-160A-495A-9695-CA8594E97D3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4497BA7-160A-495A-9695-CA8594E97D3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{34DB7632-07F4-40F0-854D-F51788441F0F} = {6E66182B-1C58-455C-8035-B039439781AE}
 		{152D5E33-78B8-4746-9B98-21829665FBF5} = {B4D13052-545F-4F99-8084-0E64D4984F64}
+		{C4497BA7-160A-495A-9695-CA8594E97D3E} = {0AEF7AC3-3DE9-4AC1-B5AB-3C47E7E993F0}
 	EndGlobalSection
 EndGlobal

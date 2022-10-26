@@ -1,0 +1,8 @@
+POST https://localhost:7117/payments HTTP/1.1
+content-type: application/json
+
+{
+    "amount": 100,
+    "currency": "EUR",
+    "reference": "my reference"
+}

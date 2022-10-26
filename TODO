@@ -1,0 +1,2 @@
+[] Could have separate interfaces for IStreamReader / IStreamWriter
+[] Can we use System.Text.Json instead of Newtonsoft?

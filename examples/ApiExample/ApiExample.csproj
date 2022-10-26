@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Odyssey\Odyssey.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Minid" Version="0.1.2" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>38288aea-516c-452c-9628-998a7e766350</UserSecretsId>
+  </PropertyGroup>
+</Project>
