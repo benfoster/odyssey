@@ -79,61 +79,107 @@ public sealed class EventStore : IEventStore
         return database.CreateContainerIfNotExistsAsync(containerProperties, cancellationToken: cancellationToken);
     }
 
-    public async Task AppendToStream(string streamId, IEnumerable<EventData> events, StreamState expectedState, CancellationToken cancellationToken = default)
+    public async Task AppendToStream(string streamId, IReadOnlyList<EventData> events, StreamState expectedState, CancellationToken cancellationToken = default)
     {
         streamId.NotNullOrWhiteSpace();
         events.NotNull(nameof(events));
 
         _logger.LogDebug("Append to stream - {streamName}@{expectedRevision}.", streamId, expectedState);
 
-        const int firstEventNumber = 1; // TODO calculate
+        TransactionalBatch batch = _container.CreateTransactionalBatch(new PartitionKey(streamId));
 
         try
         {
-            var transactionalBatchItemRequestOptions = new TransactionalBatchItemRequestOptions
-            {
-                EnableContentResponseOnWrite = false
-            };
-
-            TransactionalBatch batch = _container.CreateTransactionalBatch(new PartitionKey(streamId));
-
-            foreach (EventData @event in events)
-            {
-                // TODO calculate event number
-                batch.CreateItem(CosmosEvent.FromEventData(streamId, 1, @event, _serializer), transactionalBatchItemRequestOptions);
-            }
-
             Task<TransactionalBatchResponse> appendTask = expectedState switch
             {
                 { } when expectedState == StreamState.StreamExists => AppendToExistingStream(streamId, events, cancellationToken),
-                { } when expectedState == StreamState.NoStream => AppendToNewStream(streamId, events, cancellationToken),
-                _ => AppendToStream(batch, cancellationToken)
+                { } when expectedState == StreamState.NoStream => AppendToNewStream(streamId, events, batch, cancellationToken),
+                _ => AppendToStreamAnyState(streamId, events, batch, cancellationToken)
             };
 
-            TransactionalBatchResponse batchResponse = await appendTask;
-
-            // var batchResponse = firstEventNumber == 1 ?
-            //     await CreateEvents(batch, cancellationToken) :
-            //     await CreateEventsOnlyIfPreviousEventExists(batch, streamId, firstEventNumber - 1, cancellationToken);
-
-            // _loggingOptions.OnSuccess(ResponseInformation.FromWriteResponse(nameof(AppendToStream), batchResponse));
+            _ = await appendTask;
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.Conflict || ex.Headers["x-ms-substatus"] == "409" || ex.SubStatusCode == 409)
         {
-            throw new ConcurrencyException(
-                $"Concurrency conflict when appending to stream {streamId}. Expected revision {firstEventNumber - 1}", ex);
+            throw new ConcurrencyException($"Concurrency conflict when appending to stream {streamId}.", ex);
         }
     }
 
-    public async Task AppendToStream(string streamId, IEnumerable<EventData> events, StreamRevision expectedRevision, CancellationToken cancellationToken = default)
+    public async Task AppendToStream(string streamId, IReadOnlyList<EventData> events, StreamRevision expectedRevision, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Append to stream - {streamName}@{expectedRevision}.", streamId, expectedRevision);
+        _logger.LogDebug("Append to stream at {expectedRevision}@{streamId}.", expectedRevision, streamId);
 
-        await AppendToExistingStream(streamId, events, expectedRevision, cancellationToken);
+        TransactionalBatch batch = _container.CreateTransactionalBatch(new PartitionKey(streamId));
+
+        var transactionalBatchItemRequestOptions = new TransactionalBatchItemRequestOptions
+        {
+            EnableContentResponseOnWrite = false // Don't return the event data in the response
+        };
+
+        ulong revision = expectedRevision;
+
+        // Attempt to read the event at the expected revision
+        batch.ReadItem($"{revision}@{streamId}", new TransactionalBatchItemRequestOptions { EnableContentResponseOnWrite = false });
+
+        for (int index = 0; index < events.Count; index++)
+        {
+            batch.CreateItem(CosmosEvent.FromEventData(streamId, Convert.ToUInt64(++expectedRevision), events[index], _serializer), transactionalBatchItemRequestOptions);
+        }
+
+        // There are two concurrency reasons why this may fail:
+        // 1. The expected version does not exist
+        // 2. The item has been updated meaning that the batch.CreateItem will attempt to write an event number
+        //      that already exists
+        // We should think about how we can communicate both of these scenarios
+
+        using var batchResponse = await batch.ExecuteAsync(cancellationToken);
+
+        if (!batchResponse.IsSuccessStatusCode)
+        {
+            // Could indicate the revision of the stream
+            throw new ConcurrencyException($"Concurrency conflict when appending to stream {streamId}. Stream revision expectation failed");
+        }
     }
 
-    private static async Task<TransactionalBatchResponse> AppendToStream(TransactionalBatch batch, CancellationToken cancellationToken)
+    private async Task<TransactionalBatchResponse> AppendToStreamAnyState(string streamId, IReadOnlyList<EventData> events, TransactionalBatch batch, CancellationToken cancellationToken)
     {
+        // To append to a stream in any state we need to obtain the last event of the stream
+        // This is not particular performant - it may be better to try a point read first to see if the stream exists
+        // Then fall back to getting the last event number
+        var queryDefinition = new QueryDefinition(@"
+            SELECT TOP 1 VALUE e.event_number
+            FROM e
+            WHERE e.stream_id = @stream_id
+            ORDER BY e.event_number DESC" // Do we need to sort or is the default sort enough?
+        )
+        .WithParameter("@stream_id", streamId);
+
+        var options = new QueryRequestOptions
+        {
+            MaxItemCount = 1,
+            PartitionKey = new PartitionKey(streamId)
+        };
+
+        using var eventsQuery = _container.GetItemQueryIterator<ulong>(queryDefinition, requestOptions: options);
+        ulong expectedRevision = 0;
+
+        if (eventsQuery.HasMoreResults)
+        {
+            expectedRevision = (await eventsQuery.ReadNextAsync(cancellationToken)).SingleOrDefault();
+        }
+
+        var transactionalBatchItemRequestOptions = new TransactionalBatchItemRequestOptions
+        {
+            EnableContentResponseOnWrite = false
+        };
+
+        // Increment event number based on the current revision
+        // This can still fail if the stream is written to in the meantime
+        for (int index = 0; index < events.Count; index++)
+        {
+            batch.CreateItem(CosmosEvent.FromEventData(streamId, Convert.ToUInt64(++expectedRevision), events[index], _serializer), transactionalBatchItemRequestOptions);
+        }
+
         using TransactionalBatchResponse batchResponse = await batch.ExecuteAsync(cancellationToken);
 
         return batchResponse.IsSuccessStatusCode
@@ -142,18 +188,38 @@ public sealed class EventStore : IEventStore
                 batchResponse.ActivityId, batchResponse.RequestCharge);
     }
 
-    private static Task<TransactionalBatchResponse> AppendToNewStream(string streamId, IEnumerable<EventData> events, CancellationToken cancellationToken)
+    private async Task<TransactionalBatchResponse> AppendToNewStream(string streamId, IReadOnlyList<EventData> events, TransactionalBatch batch, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var transactionalBatchItemRequestOptions = new TransactionalBatchItemRequestOptions
+        {
+            EnableContentResponseOnWrite = false // Don't return the event data in the response
+        };
+
+        // If 0@{streamId} exists then the stream exists and 
+        // the transaction will fail since batch.CreateItem fails if the item exists
+
+        for (int index = 0; index < events.Count; index++)
+        {
+            batch.CreateItem(CosmosEvent.FromEventData(streamId, Convert.ToUInt64(index), events[index], _serializer), transactionalBatchItemRequestOptions);
+        }
+
+        using var batchResponse = await batch.ExecuteAsync(cancellationToken);
+
+        return batchResponse.IsSuccessStatusCode
+            ? batchResponse
+            : throw batchResponse.StatusCode switch
+            {
+                HttpStatusCode.Conflict => new CosmosException(
+                    $"Stream '{streamId}' already exists",
+                    HttpStatusCode.Conflict, 0, batchResponse.ActivityId, batchResponse.RequestCharge),
+                _ => new CosmosException(batchResponse.ErrorMessage, batchResponse.StatusCode, 0,
+                    batchResponse.ActivityId, batchResponse.RequestCharge)
+            };
     }
 
     private static Task<TransactionalBatchResponse> AppendToExistingStream(string streamId, IEnumerable<EventData> events, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
-    }
-
-    private Task<TransactionalBatchResponse> AppendToExistingStream(string streamId, IEnumerable<EventData> events, StreamRevision expectedRevision, CancellationToken cancellationToken)
-    {
+        // This is the same as AppendToStreamAnyState accept it expects the stream to exist
         throw new NotImplementedException();
     }
 
@@ -169,7 +235,7 @@ public sealed class EventStore : IEventStore
             SELECT VALUE e
             FROM e
             WHERE e.stream_id = @stream_id
-            ORDER BY e.eventNumber ASC" // Do we need to sort or is the default sort enough?
+            ORDER BY e.event_number ASC" // Do we need to sort or is the default sort enough?
         )
         // var queryDefinition = new QueryDefinition(@"
         //     SELECT VALUE e

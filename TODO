@@ -2,9 +2,14 @@
 [] Can we use System.Text.Json instead of Newtonsoft?
 [] Example of HTTP streaming (IAsyncEnumerable)
 [] Calculate event number
-[] Append stream and validate existing stream
-[] Append stream and validate not existing stream
-[] Append stream and validate stream revision
+[] Append stream (any revision) and validate stream exists
+[x] Append stream and validate stream does not exist
+[x] Append stream and validate stream revision
+[x] Append stream any state
+    [] Needs optimising as relying on query
 [x] Read all stream forwards
 [] Read stream in range (if we know the lower / upper bound, can we use a Point Read - ReadManyItemsAsyc)
 [] How to expose metadata such as RUs
+[] StreamRevision supports None which has the same behaviour as stream does not exists. This is currently not working.
+[] Helper for formatting event IDs {revision}@{streamId}
+[] Not sure we're getting value out of the expected revision vs using a ulong value and constants for values with meaning

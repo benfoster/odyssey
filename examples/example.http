@@ -20,6 +20,18 @@ content-type: application/json
 
 ###
 
+# Authorize (expects 0@{streamId} to exist)
+POST {{host}}/payments/{{payment_id}}/authorize HTTP/1.1
+content-type: application/json
+
+###
+
+# Refund (simply appends to stream regardless of state)
+POST {{host}}/payments/{{payment_id}}/refunds HTTP/1.1
+content-type: application/json
+
+###
+
 # Get Events
 GET {{host}}/events/{{payment_id}} HTTP/1.1
 content-type: application/json
