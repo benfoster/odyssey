@@ -1,8 +1,31 @@
-POST https://localhost:7117/payments HTTP/1.1
+@host = https://localhost:7117
+
+###
+
+# Initiate Payment
+# @name initiate_payment
+POST {{host}}/payments HTTP/1.1
 content-type: application/json
 
 {
     "amount": 100,
     "currency": "EUR",
     "reference": "my reference"
+}
+
+
+###
+
+@payment_id = {{initiate_payment.response.body.$.id}}
+
+###
+
+# Get Events
+GET {{host}}/events/{{payment_id}} HTTP/1.1
+content-type: application/json
+
+{
+    "amount_minor": 100,
+    "currency": "EUR",
+    "reference": "ORD-12345"
 }

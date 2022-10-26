@@ -1,2 +1,10 @@
 [] Could have separate interfaces for IStreamReader / IStreamWriter
 [] Can we use System.Text.Json instead of Newtonsoft?
+[] Example of HTTP streaming (IAsyncEnumerable)
+[] Calculate event number
+[] Append stream and validate existing stream
+[] Append stream and validate not existing stream
+[] Append stream and validate stream revision
+[x] Read all stream forwards
+[] Read stream in range (if we know the lower / upper bound, can we use a Point Read - ReadManyItemsAsyc)
+[] How to expose metadata such as RUs

@@ -1,8 +1,13 @@
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Azure.Cosmos;
 using Minid;
+using O9d.Json.Formatting;
 using Odyssey;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.Configure<JsonOptions>(
+    opt => opt.SerializerOptions.PropertyNamingPolicy = new JsonSnakeCaseNamingPolicy());
+
 var app = builder.Build();
 
 using CosmosClient client = CreateClient(builder.Configuration);
@@ -17,14 +22,23 @@ app.MapPost("/payments", async (PaymentRequest payment) =>
 
     await eventStore.AppendToStream(initiated.Id.ToString(), new[] { Map(initiated) }, StreamState.Any);
 
-    return Results.Ok();
+    return Results.Ok(new
+    {
+        initiated.Id
+    });
+});
+
+app.MapGet("/events/{id}", async (string id) =>
+{
+    var events = await eventStore.ReadStream(id, Direction.Forwards, StreamPosition.Start);
+    return Results.Ok(events);
 });
 
 app.Run();
 
 
 static EventData Map<TEvent>(TEvent @event)
-    => new(Guid.NewGuid(), @event!.GetType().Name, @event);
+    => new(Guid.NewGuid(), @event!.GetType().Name.ToSnakeCase(), @event);
 
 
 

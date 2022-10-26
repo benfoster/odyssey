@@ -157,8 +157,51 @@ public sealed class EventStore : IEventStore
         throw new NotImplementedException();
     }
 
-    public Task<IReadOnlyCollection<EventData>> ReadStream(string streamId, Direction direction, StreamPosition position, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<EventData>> ReadStream(string streamId, Direction direction, StreamPosition position, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        streamId.NotNullOrWhiteSpace();
+
+        // int endPosition = numberOfEventsToRead == int.MaxValue
+        //     ? int.MaxValue
+        //     : startPosition + numberOfEventsToRead - 1;
+
+        var queryDefinition = new QueryDefinition(@"
+            SELECT VALUE e
+            FROM e
+            WHERE e.stream_id = @stream_id
+            ORDER BY e.eventNumber ASC" // Do we need to sort or is the default sort enough?
+        )
+        // var queryDefinition = new QueryDefinition(@"
+        //     SELECT VALUE e
+        //     FROM e
+        //     WHERE e.streamId = @stream_id
+        //         AND (e.eventNumber BETWEEN @LowerBound AND @UpperBound)
+        //     ORDER BY e.eventNumber ASC"
+        // )
+        .WithParameter("@stream_id", streamId);
+        // .WithParameter("@LowerBound", startPosition)
+        // .WithParameter("@UpperBound", endPosition);
+
+        var options = new QueryRequestOptions
+        {
+            //MaxItemCount = numberOfEventsToRead,
+            PartitionKey = new PartitionKey(streamId)
+        };
+
+        using var eventsQuery = _container.GetItemQueryIterator<CosmosEvent>(queryDefinition, requestOptions: options);
+        var events = new List<EventData>(); // could be pre-initialised to expected size
+
+        while (eventsQuery.HasMoreResults)
+        {
+            var response = await eventsQuery.ReadNextAsync(cancellationToken);
+            //_loggingOptions.OnSuccess(ResponseInformation.FromReadResponse(nameof(ReadStreamForwards), response));
+
+            foreach (var @event in response)
+            {
+                events.Add(@event.ToEventData(_serializer));
+            }
+        }
+
+        return events.AsReadOnly();
     }
 }

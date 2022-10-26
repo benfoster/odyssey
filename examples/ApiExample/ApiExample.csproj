@@ -1,9 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Odyssey\Odyssey.csproj" />
+    <ProjectReference Include="..\..\src\Odyssey\Odyssey.csproj"/>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Minid" Version="0.1.2" />
+    <PackageReference Include="Minid" Version="0.1.2"/>
+    <PackageReference Include="O9d.Json.Formatting" Version="0.1.0"/>
   </ItemGroup>
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
