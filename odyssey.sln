@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6E66182B-1C58-455C-8035-B039439781AE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Odyssey", "src\Odyssey\Odyssey.csproj", "{34DB7632-07F4-40F0-854D-F51788441F0F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{B4D13052-545F-4F99-8084-0E64D4984F64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Odyssey.Tests", "test\Odyssey.Tests\Odyssey.Tests.csproj", "{152D5E33-78B8-4746-9B98-21829665FBF5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{34DB7632-07F4-40F0-854D-F51788441F0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34DB7632-07F4-40F0-854D-F51788441F0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34DB7632-07F4-40F0-854D-F51788441F0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34DB7632-07F4-40F0-854D-F51788441F0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{152D5E33-78B8-4746-9B98-21829665FBF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{152D5E33-78B8-4746-9B98-21829665FBF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{152D5E33-78B8-4746-9B98-21829665FBF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{152D5E33-78B8-4746-9B98-21829665FBF5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{34DB7632-07F4-40F0-854D-F51788441F0F} = {6E66182B-1C58-455C-8035-B039439781AE}
+		{152D5E33-78B8-4746-9B98-21829665FBF5} = {B4D13052-545F-4F99-8084-0E64D4984F64}
+	EndGlobalSection
+EndGlobal
