@@ -48,7 +48,7 @@ public class EventConsumer : IHostedService
         _logger.LogInformation("Starting Change Feed Processor {Instance}@{ProcessorName}", instanceName, proecssorName);
 
         // Ref https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/change-feed-processor?tabs=dotnet
-        _changeFeedProcessor = _cosmosClient.GetContainer(_databaseName, "commits")
+        _changeFeedProcessor = _cosmosClient.GetContainer(_databaseName, "events")
             .GetChangeFeedProcessorBuilder<CosmosEvent>(processorName: proecssorName, onChangesDelegate: HandleChangesAsync)
                 .WithLeaseAcquireNotification(OnLeaseAcquiredAsync)
                 .WithLeaseReleaseNotification(OnLeaseReleaseAsync)

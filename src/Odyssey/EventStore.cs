@@ -33,8 +33,9 @@ public sealed class EventStore : IEventStore
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        cancellationToken.ThrowIfCancellationRequested();
-        var databaseResponse = await _cosmosClient.CreateDatabaseIfNotExistsAsync(_databaseName, cancellationToken: cancellationToken);
+        var throughputProperties = ThroughputProperties.CreateAutoscaleThroughput(1000); // TODO configurable
+
+        var databaseResponse = await _cosmosClient.CreateDatabaseIfNotExistsAsync(_databaseName, throughputProperties, cancellationToken: cancellationToken);
 
         _database = databaseResponse.Database;
 
@@ -55,7 +56,7 @@ public sealed class EventStore : IEventStore
     {
         var containerProperties = new ContainerProperties()
         {
-            Id = "commits", // collectionOptions.CollectionName, TODO make configurable
+            Id = "events", // TODO make configurable
             IndexingPolicy = new IndexingPolicy
             {
                 IncludedPaths =

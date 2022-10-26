@@ -26,6 +26,9 @@ public sealed class CosmosEvent
     [JsonProperty("event_number")]
     public ulong EventNumber { get; set; }
 
+    // https://learn.microsoft.com/en-us/azure/cosmos-db/account-databases-containers-items#properties-of-an-item
+    [JsonProperty("_ts")]
+    public long? TimeStamp { get; set; }
 
     public EventData ToEventData(JsonSerializer serializer)
     {
