@@ -52,7 +52,7 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
             eventsToStore.Add(CreateEventData(@event));
         }
 
-        await _eventStore.AppendToStream(streamId, eventsToStore.AsReadOnly(), StreamRevision.FromInt64(aggregate.LastVersion), cancellationToken);
+        await _eventStore.AppendToStream(streamId, eventsToStore.AsReadOnly(), ExpectedState.AtVersion(aggregate.LastVersion), cancellationToken);
         aggregate.CommitPendingEvents();
     }
 

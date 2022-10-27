@@ -27,17 +27,6 @@ public readonly struct StreamPosition : IEquatable<StreamPosition>, IComparable<
         value == -1 ? End : new StreamPosition(Convert.ToUInt64(value));
 
     /// <summary>
-    /// Creates a <see cref="StreamPosition"/> from a <see cref="StreamRevision"/>.
-    /// </summary>
-    /// <param name="revision"></param>
-    /// <returns></returns>
-    public static StreamPosition FromStreamRevision(StreamRevision revision) => revision.ToUInt64() switch
-    {
-        ulong.MaxValue => throw new ArgumentOutOfRangeException(nameof(revision)),
-        _ => new StreamPosition(revision.ToUInt64())
-    };
-
-    /// <summary>
     /// Constructs a new <see cref="StreamPosition"/>.
     /// </summary>
     /// <param name="value"></param>

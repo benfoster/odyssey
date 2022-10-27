@@ -22,7 +22,7 @@ var repository = new AggregateRepository<Id>(eventStore);
 app.MapPost("/payments", async (PaymentRequest payment) =>
 {
     var initiated = new PaymentInitiated(Id.NewId("pay"), payment.Amount, payment.Currency, payment.Reference);
-    await eventStore.AppendToStream(initiated.Id.ToString(), new[] { Map(initiated) }, StreamState.NoStream);
+    await eventStore.AppendToStream(initiated.Id.ToString(), new[] { Map(initiated) }, ExpectedState.NoStream);
 
     return Results.Ok(new
     {
@@ -35,7 +35,7 @@ app.MapPost("/payments/{id}/authorize", async (Id id) =>
 {
     var authorized = new PaymentAuthorized(id, DateTime.UtcNow);
     // Pass the expected stream revision
-    await eventStore.AppendToStream(authorized.Id.ToString(), new[] { Map(authorized) }, 0);
+    await eventStore.AppendToStream(authorized.Id.ToString(), new[] { Map(authorized) }, ExpectedState.AtVersion(0));
 
     return Results.Ok(new
     {
@@ -48,7 +48,7 @@ app.MapPost("/payments/{id}/refunds", async (Id id) =>
 {
     var refunded = new PaymentRefunded(id, DateTime.UtcNow);
     // Add the event, regardless of the state/revision of stream
-    await eventStore.AppendToStream(refunded.Id.ToString(), new[] { Map(refunded) }, StreamState.Any);
+    await eventStore.AppendToStream(refunded.Id.ToString(), new[] { Map(refunded) }, ExpectedState.Any);
 
     return Results.Ok(new
     {

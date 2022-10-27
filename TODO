@@ -10,17 +10,13 @@
 [x] Read all stream forwards
 [] Read stream in range (if we know the lower / upper bound, can we use a Point Read - ReadManyItemsAsyc)
 [] How to expose metadata such as RUs in response?
-[] StreamRevision supports None which has the same behaviour as stream does not exists. This is currently not working.
 [] Helper for formatting event IDs {revision}@{streamId}
-[] Not sure we're getting value out of the expected revision vs using a ulong value and constants for values with meaning
 [x] Model extensions (Aggregate + Repository)
 [] Review cosmos SDK performance tips - https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-dotnet-sdk-v3?tabs=trace-net-core
 [] Integrate with https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/how-to-use-change-feed-estimator
 [] In cases where only a single event is being appended we can avoid using a transaction
 [] Include full Clr type, name and qualified name without version in metadata
 [] How to reduce the interval between acquiring a new lease
-
-State:
-- 2 = Any
-- 1 = Stream doesn't exist
-0+ stream revision
+[] Support idempotence based on Event ID - ref https://developers.eventstore.com/clients/dotnet/5.0/appending.html#idempotence
+[] AppendToStreamAtVersion should throw wrong version exception
+[] It would be helpful to return the event number/combined id (as metadata?)

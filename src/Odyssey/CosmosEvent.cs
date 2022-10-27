@@ -24,7 +24,7 @@ public sealed class CosmosEvent
     public Dictionary<string, object> Metadata { get; set; } = null!;
 
     [JsonProperty("event_number")]
-    public ulong EventNumber { get; set; }
+    public long EventNumber { get; set; }
 
     // https://learn.microsoft.com/en-us/azure/cosmos-db/account-databases-containers-items#properties-of-an-item
     [JsonProperty("_ts")] // Unix time
@@ -54,7 +54,7 @@ public sealed class CosmosEvent
         );
     }
 
-    public static CosmosEvent FromEventData(string streamId, ulong eventNumber, EventData @event, JsonSerializer serializer)
+    public static CosmosEvent FromEventData(string streamId, long eventNumber, EventData @event, JsonSerializer serializer)
         => new()
         {
             Id = $"{eventNumber}@{streamId}",
