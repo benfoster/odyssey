@@ -18,3 +18,9 @@
 [] Integrate with https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/how-to-use-change-feed-estimator
 [] In cases where only a single event is being appended we can avoid using a transaction
 [] Include full Clr type, name and qualified name without version in metadata
+[] How to reduce the interval between acquiring a new lease
+
+State:
+- 2 = Any
+- 1 = Stream doesn't exist
+0+ stream revision

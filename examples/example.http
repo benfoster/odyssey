@@ -57,5 +57,17 @@ content-type: application/json
 
 ###
 
+POST {{host}}/onboarding/applications/{{application_id}}/ubos HTTP/1.1
+content-type: application/json
+
+{
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "email": "jsmith@gmail.com"
+}
+
+###
+
+
 # Get Events
 GET {{host}}/events/{{application_id}} HTTP/1.1

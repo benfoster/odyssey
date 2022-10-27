@@ -19,7 +19,8 @@ public class EventConsumer : IHostedService
 
     private static readonly Dictionary<string, Type> TypeMap = new()
     {
-        { "payment_initiated" , typeof(PaymentInitiated)}
+        { "payment_initiated" , typeof(PaymentInitiated)},
+        { "UboAdded" , typeof(UboAdded)}
     };
 
     public EventConsumer(CosmosClient cosmosClient, IMediator mediator, ILogger<EventConsumer> logger)

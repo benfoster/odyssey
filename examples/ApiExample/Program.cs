@@ -96,6 +96,22 @@ app.MapPost("onboarding/applications/{id}/start", async (Id id, HttpContext http
     }
 });
 
+app.MapPost("onboarding/applications/{id}/ubos", async (Id id, InviteUboRequest uboRequest) =>
+{
+    var application = await repository.GetById<Application>(id);
+    if (application is null)
+    {
+        // How to handle nulls - Aggregate.Empty?
+        return Results.NotFound();
+    }
+    else
+    {
+        application.InviteUbo(uboRequest.FirstName, uboRequest.LastName, uboRequest.Email);
+        await repository.Save(application);
+        return Results.Accepted();
+    }
+});
+
 
 app.Run();
 
@@ -120,3 +136,4 @@ record PaymentRefunded(Id Id, DateTime RefundedOn);
 
 
 record InitiateApplicationRequest(string FirstName, string LastName, string Email);
+record InviteUboRequest(string FirstName, string LastName, string Email);

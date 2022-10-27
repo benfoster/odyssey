@@ -19,3 +19,20 @@ public class PaymentInitiatedHandler : INotificationHandler<PaymentInitiated>
         return Task.CompletedTask;
     }
 }
+
+
+public class UboAddedHandler : INotificationHandler<UboAdded>
+{
+    private readonly ILogger<PaymentInitiatedHandler> _logger;
+
+    public UboAddedHandler(ILogger<PaymentInitiatedHandler> logger)
+    {
+        _logger = logger;
+    }
+
+    public Task Handle(UboAdded @event, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Sending ubo {FirstName} {LastName} email to complete their details", @event.FirstName, @event.LastName);
+        return Task.CompletedTask;
+    }
+}

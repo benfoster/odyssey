@@ -29,6 +29,11 @@ public class Application : Aggregate<Id>
         Raise(new ApplicationStarted(Id, ipAddress, DateTime.UtcNow));
     }
 
+    public void InviteUbo(string firstName, string lastName, string email)
+    {
+        Raise(new UboAdded(firstName, lastName, email));
+    }
+
     protected override void When(object @event)
     {
         switch (@event)
@@ -62,3 +67,4 @@ public enum ApplicationState
 
 public record ApplicationInitiated(Id ApplicationId, Id PlatformId, string Email, string FirstName, string LastName, DateTime InitiatedOn);
 public record ApplicationStarted(Id ApplicationId, string IPAddress, DateTime StartedOn);
+public record UboAdded(string FirstName, string LastName, string Email);
