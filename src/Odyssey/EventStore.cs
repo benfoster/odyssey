@@ -112,6 +112,13 @@ public sealed class EventStore : IEventStore
 
         TransactionalBatch batch = _container.CreateTransactionalBatch(new PartitionKey(streamId));
 
+        // If the stream revision is none, then expect stream to not exist
+        if (expectedRevision == StreamRevision.None)
+        {
+            await AppendToNewStream(streamId, events, batch, cancellationToken);
+            return;
+        }
+
         var transactionalBatchItemRequestOptions = new TransactionalBatchItemRequestOptions
         {
             EnableContentResponseOnWrite = false // Don't return the event data in the response

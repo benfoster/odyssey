@@ -1,8 +1,10 @@
+using ApiExample.Onboarding;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Azure.Cosmos;
 using Minid;
 using O9d.Json.Formatting;
 using Odyssey;
+using Odyssey.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<JsonOptions>(
@@ -15,6 +17,7 @@ var eventStore = new EventStore(client, "odyssey", app.Services.GetRequiredServi
 
 await eventStore.Initialize();
 
+var repository = new AggregateRepository<Id>(eventStore);
 
 app.MapPost("/payments", async (PaymentRequest payment) =>
 {
@@ -60,6 +63,40 @@ app.MapGet("/events/{id}", async (string id) =>
     return Results.Ok(events);
 });
 
+
+var platformId = Id.NewId("acc");
+
+
+app.MapPost("onboarding/applications", async (InitiateApplicationRequest applicationRequest) =>
+{
+    var application =
+        Application.Initiate(platformId, applicationRequest.Email, applicationRequest.FirstName, applicationRequest.LastName);
+
+    await repository.Save(application);
+
+    return Results.Ok(new
+    {
+        Id = application.Id
+    });
+});
+
+app.MapPost("onboarding/applications/{id}/start", async (Id id, HttpContext httpContext) =>
+{
+    var application = await repository.GetById<Application>(id);
+    if (application is null)
+    {
+        // How to handle nulls - Aggregate.Empty?
+        return Results.NotFound();
+    }
+    else
+    {
+        application.Start(httpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown");
+        await repository.Save(application);
+        return Results.Accepted();
+    }
+});
+
+
 app.Run();
 
 
@@ -80,3 +117,6 @@ record PaymentRequest(int Amount, string Currency, string Reference);
 record PaymentInitiated(Id Id, int Amount, string Currency, string Reference);
 record PaymentAuthorized(Id Id, DateTime AuthorizedOn);
 record PaymentRefunded(Id Id, DateTime RefundedOn);
+
+
+record InitiateApplicationRequest(string FirstName, string LastName, string Email);

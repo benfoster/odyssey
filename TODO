@@ -1,7 +1,7 @@
 [] Could have separate interfaces for IStreamReader / IStreamWriter
 [] Can we use System.Text.Json instead of Newtonsoft?
 [] Example of HTTP streaming (IAsyncEnumerable)
-[] Calculate event number
+[x] Calculate event number
 [] Append stream (any revision) and validate stream exists
 [x] Append stream and validate stream does not exist
 [x] Append stream and validate stream revision
@@ -9,9 +9,12 @@
     [] Needs optimising as relying on query
 [x] Read all stream forwards
 [] Read stream in range (if we know the lower / upper bound, can we use a Point Read - ReadManyItemsAsyc)
-[] How to expose metadata such as RUs
+[] How to expose metadata such as RUs in response?
 [] StreamRevision supports None which has the same behaviour as stream does not exists. This is currently not working.
 [] Helper for formatting event IDs {revision}@{streamId}
 [] Not sure we're getting value out of the expected revision vs using a ulong value and constants for values with meaning
-[] Model extensions (Aggregate + Repository)
+[x] Model extensions (Aggregate + Repository)
 [] Review cosmos SDK performance tips - https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-dotnet-sdk-v3?tabs=trace-net-core
+[] Integrate with https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/how-to-use-change-feed-estimator
+[] In cases where only a single event is being appended we can avoid using a transaction
+[] Include full Clr type, name and qualified name without version in metadata

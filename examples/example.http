@@ -13,7 +13,6 @@ content-type: application/json
     "reference": "my reference"
 }
 
-
 ###
 
 @payment_id = {{initiate_payment.response.body.$.id}}
@@ -34,10 +33,29 @@ content-type: application/json
 
 # Get Events
 GET {{host}}/events/{{payment_id}} HTTP/1.1
+
+### Applications
+
+# Initiate Onboarding Application
+# @name initiate_application
+POST {{host}}/onboarding/applications HTTP/1.1
 content-type: application/json
 
 {
-    "amount_minor": 100,
-    "currency": "EUR",
-    "reference": "ORD-12345"
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "jdoe@gmail.com"
 }
+
+###
+
+@application_id = {{initiate_application.response.body.$.id}}
+
+# Start Application (filling in)
+POST {{host}}/onboarding/applications/{{application_id}}/start HTTP/1.1
+content-type: application/json
+
+###
+
+# Get Events
+GET {{host}}/events/{{application_id}} HTTP/1.1
