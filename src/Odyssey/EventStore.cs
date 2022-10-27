@@ -85,7 +85,7 @@ public sealed class EventStore : IEventStore
         return database.CreateContainerIfNotExistsAsync(containerProperties, cancellationToken: cancellationToken);
     }
 
-    public async Task AppendToStream(string streamId, IReadOnlyList<EventData> events, ExpectedState expectedState, CancellationToken cancellationToken = default)
+    public async Task AppendToStream(string streamId, IReadOnlyList<EventData> events, StreamState expectedState, CancellationToken cancellationToken = default)
     {
         streamId.NotNullOrWhiteSpace();
         events.NotNull();
@@ -96,9 +96,9 @@ public sealed class EventStore : IEventStore
         {
             Task<TransactionalBatchResponse> appendTask = expectedState switch
             {
-                { } when expectedState == ExpectedState.NoStream => AppendToNewStream(streamId, events, cancellationToken),
-                { } when expectedState == ExpectedState.StreamExists => AppendToExistingStreamAnyVersion(streamId, events, cancellationToken),
-                { } when expectedState == ExpectedState.Any => AppendToStreamAnyState(streamId, events, cancellationToken),
+                { } when expectedState == StreamState.NoStream => AppendToNewStream(streamId, events, cancellationToken),
+                { } when expectedState == StreamState.StreamExists => AppendToExistingStreamAnyVersion(streamId, events, cancellationToken),
+                { } when expectedState == StreamState.Any => AppendToStreamAnyState(streamId, events, cancellationToken),
                 _ => AppendToStreamAtVersion(streamId, events, expectedState, cancellationToken)
             };
 
@@ -185,11 +185,11 @@ public sealed class EventStore : IEventStore
 
         if (!eventsQuery.HasMoreResults)
         {
-            return ExpectedState.NoStream;
+            return StreamState.NoStream;
         }
 
         long currentVersion = (await eventsQuery.ReadNextAsync(cancellationToken)).SingleOrDefault();
-        return ExpectedState.AtVersion(currentVersion);
+        return StreamState.AtVersion(currentVersion);
     }
 
     /// <summary>

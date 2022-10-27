@@ -1,13 +1,13 @@
 namespace Odyssey;
 
 /// <summary>
-/// Represents the expected state of a stream
+/// Represents the state of a stream
 /// </summary>
-public readonly struct ExpectedState : IEquatable<ExpectedState>, IComparable<ExpectedState>, IComparable
+public readonly struct StreamState : IEquatable<StreamState>, IComparable<StreamState>, IComparable
 {
     public readonly long _value;
 
-    private ExpectedState(long value)
+    private StreamState(long value)
     {
         _value = value;
     }
@@ -24,39 +24,39 @@ public readonly struct ExpectedState : IEquatable<ExpectedState>, IComparable<Ex
     /// Represents the state where the stream exists at a specific version
     /// </summary>
     /// <param name="version">The expected version of the stream</param>
-    public static ExpectedState AtVersion(long version) => new(version);
+    public static StreamState AtVersion(long version) => new(version);
 
     /// <summary>
     /// Represents the state where the stream does not exist
     /// </summary>
-    public static readonly ExpectedState NoStream = new(Constants.NoStream);
+    public static readonly StreamState NoStream = new(Constants.NoStream);
 
     /// <summary>
     /// Represents the state where the stream exists at any version
     /// </summary>
-    public static readonly ExpectedState StreamExists = new(Constants.StreamExists);
+    public static readonly StreamState StreamExists = new(Constants.StreamExists);
 
     /// <summary>
     /// Represents any state of the stream or version
     /// </summary>
-    public static readonly ExpectedState Any = new(Constants.Any);
+    public static readonly StreamState Any = new(Constants.Any);
 
     /// <inheritdoc />
-    public int CompareTo(ExpectedState other) => _value.CompareTo(other._value);
+    public int CompareTo(StreamState other) => _value.CompareTo(other._value);
 
     /// <inheritdoc />
     public int CompareTo(object? obj) => obj switch
     {
         null => 1,
-        ExpectedState other => CompareTo(other),
-        _ => throw new ArgumentException($"Object is not a {nameof(ExpectedState)}"),
+        StreamState other => CompareTo(other),
+        _ => throw new ArgumentException($"Object is not a {nameof(StreamState)}"),
     };
 
     /// <inheritdoc />
-    public bool Equals(ExpectedState other) => _value == other._value;
+    public bool Equals(StreamState other) => _value == other._value;
 
     /// <inheritdoc />
-    public override bool Equals(object? obj) => obj is ExpectedState other && Equals(other);
+    public override bool Equals(object? obj) => obj is StreamState other && Equals(other);
 
     /// <inheritdoc />
     public override int GetHashCode() => _value.GetHashCode();
@@ -67,7 +67,7 @@ public readonly struct ExpectedState : IEquatable<ExpectedState>, IComparable<Ex
     /// <param name="left"></param>
     /// <param name="right"></param>
     /// <returns>True if left is equal to right.</returns>
-    public static bool operator ==(ExpectedState left, ExpectedState right) => left.Equals(right);
+    public static bool operator ==(StreamState left, StreamState right) => left.Equals(right);
 
     /// <summary>
     /// Compares left and right for inequality.
@@ -75,14 +75,14 @@ public readonly struct ExpectedState : IEquatable<ExpectedState>, IComparable<Ex
     /// <param name="left"></param>
     /// <param name="right"></param>
     /// <returns>True if left is not equal to right.</returns>
-    public static bool operator !=(ExpectedState left, ExpectedState right) => !left.Equals(right);
+    public static bool operator !=(StreamState left, StreamState right) => !left.Equals(right);
 
     /// <summary>
-    /// Converts a <see cref="ExpectedState"/> to a <see cref="long" />.
+    /// Converts a <see cref="StreamState"/> to a <see cref="long" />.
     /// </summary>
     /// <param name="ExpectedState"></param>
     /// <returns></returns>
-    public static implicit operator long(ExpectedState expectedState) => expectedState._value;
+    public static implicit operator long(StreamState expectedState) => expectedState._value;
 
     /// <inheritdoc />
     public override string ToString() => _value switch
