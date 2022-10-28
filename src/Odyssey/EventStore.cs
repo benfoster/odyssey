@@ -174,14 +174,10 @@ public sealed class EventStore : IEventStore
     /// </summary>
     private async Task<long> GetCurrentState(string streamId, CancellationToken cancellationToken)
     {
-        // This is not as performant - it may be better to try a point read first to see if the stream exists
-        // Then fall back to getting the last event number
-
         const string sql = @"
-            SELECT TOP 1 VALUE e.event_number
+            SELECT value COUNT(e.id) 
             FROM e
             WHERE e.stream_id = @stream_id
-            ORDER BY e.event_number DESC
         ";
 
         var queryDefinition = new QueryDefinition(sql)
@@ -189,8 +185,7 @@ public sealed class EventStore : IEventStore
 
         var options = new QueryRequestOptions
         {
-            MaxItemCount = 1,
-            PartitionKey = new PartitionKey(streamId)
+            PartitionKey = new PartitionKey(streamId),
         };
 
         using var eventsQuery = _container.GetItemQueryIterator<long>(queryDefinition, requestOptions: options);
@@ -200,8 +195,8 @@ public sealed class EventStore : IEventStore
             return StreamState.NoStream;
         }
 
-        long currentVersion = (await eventsQuery.ReadNextAsync(cancellationToken)).SingleOrDefault();
-        return StreamState.AtVersion(currentVersion);
+        long eventCount = (await eventsQuery.ReadNextAsync(cancellationToken)).SingleOrDefault();
+        return StreamState.AtVersion(eventCount - 1); // 0 based index
     }
 
     /// <summary>
