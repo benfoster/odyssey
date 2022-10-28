@@ -51,7 +51,10 @@ public sealed class CosmosEvent
             EventType,
             Data.ToObject(clrType, serializer),
             Metadata
-        );
+        )
+        {
+            EventNumber = EventNumber
+        };
     }
 
     public static CosmosEvent FromEventData(string streamId, long eventNumber, EventData @event, JsonSerializer serializer)

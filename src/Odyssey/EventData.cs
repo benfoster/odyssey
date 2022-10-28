@@ -38,4 +38,9 @@ public sealed class EventData
     /// Gets the metadata of the event
     /// </summary>
     public Dictionary<string, object>? Metadata { get; }
+
+    /// <summary>
+    /// Gets the event number within the stream
+    /// </summary>
+    public long EventNumber { get; internal set; }
 }
