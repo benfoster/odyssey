@@ -227,7 +227,7 @@ public sealed class EventStore : IEventStore
         if (validateVersion)
         {
             // Attempt to read the event at the expected revision
-            batch.ReadItem($"{version}@{streamId}", new TransactionalBatchItemRequestOptions { EnableContentResponseOnWrite = false });
+            batch.ReadItem(CosmosEvent.GenerateId(version, streamId), new TransactionalBatchItemRequestOptions { EnableContentResponseOnWrite = false });
         }
 
         long newVersion = version;

@@ -60,7 +60,7 @@ public sealed class CosmosEvent
     public static CosmosEvent FromEventData(string streamId, long eventNumber, EventData @event, JsonSerializer serializer)
         => new()
         {
-            Id = $"{eventNumber}@{streamId}",
+            Id = GenerateId(eventNumber, streamId),
             EventId = @event.Id,
             StreamId = streamId,
             EventType = @event.EventType,
@@ -68,6 +68,8 @@ public sealed class CosmosEvent
             EventNumber = eventNumber,
             Metadata = GetMetadata(@event)
         };
+
+    public static string GenerateId(long eventNumber, string streamId) => $"{eventNumber}@{streamId}";
 
     private static Dictionary<string, object> GetMetadata(EventData @event)
     {

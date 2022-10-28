@@ -10,11 +10,12 @@
 [x] Read all stream forwards
 [] Read stream in range (if we know the lower / upper bound, can we use a Point Read - ReadManyItemsAsyc)
 [] How to expose metadata such as RUs in response?
-[] Helper for formatting event IDs {revision}@{streamId}
+[x] Helper for formatting event IDs {revision}@{streamId}
 [x] Model extensions (Aggregate + Repository)
 [] Review cosmos SDK performance tips - https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/performance-tips-dotnet-sdk-v3?tabs=trace-net-core
 [] Integrate with https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/how-to-use-change-feed-estimator
 [] In cases where only a single event is being appended we can avoid using a transaction
+    [] Doesn't seem to incur additional cost but may be slower?
 [] Include full Clr type, name and qualified name without version in metadata
 [] How to reduce the interval between acquiring a new lease
 [] Support idempotence based on Event ID - ref https://developers.eventstore.com/clients/dotnet/5.0/appending.html#idempotence
@@ -22,4 +23,4 @@
 [x] It would be helpful to return the event number/combined id (as metadata?)
 [] Optimise for the append only (non versioning) use-case
     [] Here the metadata item might be a better approach since subsequent writes don't depend on its state
-[] Return immediately if events.count == 0
+[x] Return immediately if events.count == 0
