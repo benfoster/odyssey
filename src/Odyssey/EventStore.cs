@@ -99,7 +99,7 @@ public sealed class EventStore : IEventStore
                 { } when expectedState == StreamState.NoStream => AppendToNewStream(streamId, events, cancellationToken),
                 { } when expectedState == StreamState.StreamExists => AppendToExistingStreamAnyVersion(streamId, events, cancellationToken),
                 { } when expectedState == StreamState.Any => AppendToStreamAnyState(streamId, events, cancellationToken),
-                _ => AppendToStreamAtVersion(streamId, events, expectedState, cancellationToken)
+                _ => AppendToStreamAtVersion(streamId, events, expectedState, true, cancellationToken)
             };
 
             _ = await appendTask;
@@ -152,7 +152,7 @@ public sealed class EventStore : IEventStore
             throw new ConcurrencyException($"Stream '{streamId}' does not exist"); // Should use a specific exception type
         }
 
-        return await AppendToStreamAtVersion(streamId, events, currentState, cancellationToken);
+        return await AppendToStreamAtVersion(streamId, events, currentState, false, cancellationToken);
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public sealed class EventStore : IEventStore
     private async Task<TransactionalBatchResponse> AppendToStreamAnyState(string streamId, IReadOnlyList<EventData> events, CancellationToken cancellationToken)
     {
         long currentVersion = await GetCurrentState(streamId, cancellationToken);
-        return await AppendToStreamAtVersion(streamId, events, currentVersion, cancellationToken);
+        return await AppendToStreamAtVersion(streamId, events, currentVersion, false, cancellationToken);
     }
 
     /// <summary>
@@ -206,7 +206,7 @@ public sealed class EventStore : IEventStore
     ///     * The expected version does not exist
     ///     * The stream has been updated and one of the events to append would override existing events
     /// </summary>
-    private async Task<TransactionalBatchResponse> AppendToStreamAtVersion(string streamId, IReadOnlyList<EventData> events, long version, CancellationToken cancellationToken = default)
+    private async Task<TransactionalBatchResponse> AppendToStreamAtVersion(string streamId, IReadOnlyList<EventData> events, long version, bool validateVersion, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Append to stream at {Version}@{StreamId}.", version, streamId);
 
@@ -217,8 +217,13 @@ public sealed class EventStore : IEventStore
             EnableContentResponseOnWrite = false // Don't return the event data in the response
         };
 
-        // Attempt to read the event at the expected revision
-        batch.ReadItem($"{version}@{streamId}", new TransactionalBatchItemRequestOptions { EnableContentResponseOnWrite = false });
+        // If we have already validated that the version exists (e.g. Appending in any state)
+        // we can skip reading the item within the batch
+        if (validateVersion)
+        {
+            // Attempt to read the event at the expected revision
+            batch.ReadItem($"{version}@{streamId}", new TransactionalBatchItemRequestOptions { EnableContentResponseOnWrite = false });
+        }
 
         long newVersion = version;
         for (int index = 0; index < events.Count; index++)
