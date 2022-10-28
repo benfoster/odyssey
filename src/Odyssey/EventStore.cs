@@ -245,44 +245,39 @@ public sealed class EventStore : IEventStore
             };
     }
 
-    public async Task<IReadOnlyCollection<EventData>> ReadStream(string streamId, Direction direction, StreamPosition position, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<EventData>> ReadStream(string streamId, ReadDirection direction, StreamPosition position, CancellationToken cancellationToken = default)
     {
         streamId.NotNullOrWhiteSpace();
 
-        // int endPosition = numberOfEventsToRead == int.MaxValue
-        //     ? int.MaxValue
-        //     : startPosition + numberOfEventsToRead - 1;
-
-        var queryDefinition = new QueryDefinition(@"
+        const string ForwardsQuery = @"
             SELECT VALUE e
             FROM e
             WHERE e.stream_id = @stream_id
-            ORDER BY e.event_number ASC" // Do we need to sort or is the default sort enough?
-        )
-        // var queryDefinition = new QueryDefinition(@"
-        //     SELECT VALUE e
-        //     FROM e
-        //     WHERE e.streamId = @stream_id
-        //         AND (e.eventNumber BETWEEN @LowerBound AND @UpperBound)
-        //     ORDER BY e.eventNumber ASC"
-        // )
-        .WithParameter("@stream_id", streamId);
-        // .WithParameter("@LowerBound", startPosition)
-        // .WithParameter("@UpperBound", endPosition);
+            ORDER BY e.event_number ASC
+        ";
+
+        const string BackwardsQuery = @"
+            SELECT VALUE e
+            FROM e
+            WHERE e.stream_id = @stream_id
+            ORDER BY e.event_number DESC
+        ";
+
+        var queryDefinition = new QueryDefinition(direction == ReadDirection.Backwards ? BackwardsQuery : ForwardsQuery)
+            .WithParameter("@stream_id", streamId);
 
         var options = new QueryRequestOptions
         {
-            //MaxItemCount = numberOfEventsToRead,
             PartitionKey = new PartitionKey(streamId)
         };
 
         using var eventsQuery = _container.GetItemQueryIterator<CosmosEvent>(queryDefinition, requestOptions: options);
-        var events = new List<EventData>(); // could be pre-initialised to expected size
+
+        var events = new List<EventData>();
 
         while (eventsQuery.HasMoreResults)
         {
             var response = await eventsQuery.ReadNextAsync(cancellationToken);
-            //_loggingOptions.OnSuccess(ResponseInformation.FromReadResponse(nameof(ReadStreamForwards), response));
 
             foreach (var @event in response)
             {

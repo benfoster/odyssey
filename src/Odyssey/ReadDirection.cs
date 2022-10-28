@@ -3,7 +3,7 @@ namespace Odyssey;
 /// <summary>
 /// Defines the direction to read a stream of events
 /// </summary>
-public enum Direction
+public enum ReadDirection
 {
     /// <summary>
     /// Read backwards.

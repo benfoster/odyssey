@@ -24,7 +24,7 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
         var aggregate = Activator.CreateInstance<T>(); // TODO alternative to reflection
 
         IReadOnlyCollection<EventData> events
-            = await _eventStore.ReadStream(streamId, Direction.Forwards, StreamPosition.Start, cancellationToken);
+            = await _eventStore.ReadStream(streamId, ReadDirection.Forwards, StreamPosition.Start, cancellationToken);
 
         foreach (var @event in events)
         {

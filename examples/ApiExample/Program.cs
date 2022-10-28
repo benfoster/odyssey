@@ -57,9 +57,9 @@ app.MapPost("/payments/{id}/refunds", async (Id id) =>
     });
 });
 
-app.MapGet("/events/{id}", async (string id) =>
+app.MapGet("/events/{id}", async (string id, [Microsoft.AspNetCore.Mvc.FromQuery] ReadDirection? direction) =>
 {
-    var events = await eventStore.ReadStream(id, Direction.Forwards, StreamPosition.Start);
+    var events = await eventStore.ReadStream(id, direction ?? ReadDirection.Forwards, StreamPosition.Start);
     return Results.Ok(events);
 });
 
