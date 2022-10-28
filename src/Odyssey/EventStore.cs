@@ -140,12 +140,19 @@ public sealed class EventStore : IEventStore
 
 
     /// <summary>
-    /// 
+    /// To append to an *existing* stream at any state we need to first obtain the current version (must be >= 0)
+    /// Then we can append using current version as expected version
     /// </summary>
-    private static Task<TransactionalBatchResponse> AppendToExistingStreamAnyVersion(string streamId, IReadOnlyList<EventData> events, CancellationToken cancellationToken)
+    private async Task<TransactionalBatchResponse> AppendToExistingStreamAnyVersion(string streamId, IReadOnlyList<EventData> events, CancellationToken cancellationToken)
     {
-        // This is the same as AppendToStreamAnyState accept it expects the stream to exist
-        throw new NotImplementedException();
+        long currentState = await GetCurrentState(streamId, cancellationToken);
+
+        if (currentState == StreamState.NoStream)
+        {
+            throw new ConcurrencyException($"Stream '{streamId}' does not exist"); // Should use a specific exception type
+        }
+
+        return await AppendToStreamAtVersion(streamId, events, currentState, cancellationToken);
     }
 
     /// <summary>

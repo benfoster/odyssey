@@ -48,7 +48,7 @@ app.MapPost("/payments/{id}/refunds", async (Id id) =>
 {
     var refunded = new PaymentRefunded(id, DateTime.UtcNow);
     // Add the event, regardless of the state/revision of stream
-    await eventStore.AppendToStream(refunded.Id.ToString(), new[] { Map(refunded) }, StreamState.Any);
+    await eventStore.AppendToStream(refunded.Id.ToString(), new[] { Map(refunded) }, StreamState.StreamExists);
 
     return Results.Ok(new
     {
