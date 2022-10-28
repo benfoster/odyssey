@@ -90,6 +90,11 @@ public sealed class EventStore : IEventStore
         streamId.NotNullOrWhiteSpace();
         events.NotNull();
 
+        if (events.Count == 0)
+        {
+            return;
+        }
+
         _logger.LogDebug("Append to stream {ExpectedState}@{StreamId}.", expectedState, streamId);
 
         try

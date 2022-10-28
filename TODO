@@ -22,3 +22,4 @@
 [x] It would be helpful to return the event number/combined id (as metadata?)
 [] Optimise for the append only (non versioning) use-case
     [] Here the metadata item might be a better approach since subsequent writes don't depend on its state
+[] Return immediately if events.count == 0
