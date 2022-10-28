@@ -8,7 +8,6 @@
 [x] Append stream any state
     [] Needs optimising as relying on query
 [x] Read all stream forwards
-[] Read stream in range (if we know the lower / upper bound, can we use a Point Read - ReadManyItemsAsyc)
 [] How to expose metadata such as RUs in response?
 [x] Helper for formatting event IDs {revision}@{streamId}
 [x] Model extensions (Aggregate + Repository)
@@ -16,7 +15,7 @@
 [] Integrate with https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/how-to-use-change-feed-estimator
 [] In cases where only a single event is being appended we can avoid using a transaction
     [] Doesn't seem to incur additional cost but may be slower?
-[] Include full Clr type, name and qualified name without version in metadata
+[x] Include full Clr type, name and qualified name without version in metadata - include just the name for now
 [] How to reduce the interval between acquiring a new lease
 [] Support idempotence based on Event ID - ref https://developers.eventstore.com/clients/dotnet/5.0/appending.html#idempotence
 [] AppendToStreamAtVersion should throw wrong version exception

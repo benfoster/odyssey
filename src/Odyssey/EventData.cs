@@ -16,7 +16,7 @@ public sealed class EventData
         Id = id;
         EventType = eventType.NotNullOrWhiteSpace();
         Data = data.NotNull();
-        Metadata = metadata;
+        Metadata = CreateMetadata(data.GetType(), metadata);
     }
 
     /// <summary>
@@ -37,10 +37,18 @@ public sealed class EventData
     /// <summary>
     /// Gets the metadata of the event
     /// </summary>
-    public Dictionary<string, object>? Metadata { get; }
+    public Dictionary<string, object> Metadata { get; }
 
     /// <summary>
     /// Gets the event number within the stream
     /// </summary>
     public long EventNumber { get; internal set; }
+
+    private static Dictionary<string, object> CreateMetadata(Type dataType, Dictionary<string, object>? value)
+    {
+        var metadata = value ?? new Dictionary<string, object>();
+        metadata[MetadataFields.ClrQualifiedType] = dataType.AssemblyQualifiedName!;
+        metadata[MetadataFields.ClrTypeName] = dataType.Name;
+        return metadata;
+    }
 }

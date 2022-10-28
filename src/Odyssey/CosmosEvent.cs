@@ -32,10 +32,10 @@ public sealed class CosmosEvent
 
     public EventData ToEventData(JsonSerializer serializer)
     {
-        if (!Metadata.TryGetValue(MetadataFields.ClrType, out var clrTypeValue)
+        if (!Metadata.TryGetValue(MetadataFields.ClrQualifiedType, out var clrTypeValue)
             || clrTypeValue is not string typeName)
         {
-            throw new ArgumentException($"Item {Id} is missing the required {MetadataFields.ClrType} metadata value");
+            throw new ArgumentException($"Item {Id} is missing the required {MetadataFields.ClrQualifiedType} metadata value");
         }
 
         // TODO implement type cache
@@ -66,16 +66,8 @@ public sealed class CosmosEvent
             EventType = @event.EventType,
             Data = JObject.FromObject(@event.Data, serializer),
             EventNumber = eventNumber,
-            Metadata = GetMetadata(@event)
+            Metadata = @event.Metadata
         };
 
     public static string GenerateId(long eventNumber, string streamId) => $"{eventNumber}@{streamId}";
-
-    private static Dictionary<string, object> GetMetadata(EventData @event)
-    {
-        var metadata = @event.Metadata ?? new Dictionary<string, object>();
-        metadata[MetadataFields.ClrType] = @event.Data.GetType().AssemblyQualifiedName!; // TODO allow a type map to be provided
-
-        return metadata;
-    }
 }
