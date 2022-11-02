@@ -13,7 +13,7 @@ builder.Services.Configure<JsonOptions>(
 var app = builder.Build();
 
 using CosmosClient client = CreateClient(builder.Configuration);
-var eventStore = new EventStore(client, "odyssey", app.Services.GetRequiredService<ILoggerFactory>());
+var eventStore = new CosmosEventStore(client, "odyssey", app.Services.GetRequiredService<ILoggerFactory>());
 
 await eventStore.Initialize();
 
@@ -63,9 +63,7 @@ app.MapGet("/events/{id}", async (string id, [Microsoft.AspNetCore.Mvc.FromQuery
     return Results.Ok(events);
 });
 
-
 var platformId = Id.NewId("acc");
-
 
 app.MapPost("onboarding/applications", async (InitiateApplicationRequest applicationRequest) =>
 {
@@ -76,7 +74,7 @@ app.MapPost("onboarding/applications", async (InitiateApplicationRequest applica
 
     return Results.Ok(new
     {
-        Id = application.Id
+        application.Id
     });
 });
 
@@ -112,14 +110,10 @@ app.MapPost("onboarding/applications/{id}/ubos", async (Id id, InviteUboRequest 
     }
 });
 
-
 app.Run();
-
 
 static EventData Map<TEvent>(TEvent @event)
     => new(Guid.NewGuid(), @event!.GetType().Name.ToSnakeCase(), @event);
-
-
 
 static CosmosClient CreateClient(IConfiguration configuration)
 {
@@ -133,7 +127,6 @@ record PaymentRequest(int Amount, string Currency, string Reference);
 record PaymentInitiated(Id Id, int Amount, string Currency, string Reference);
 record PaymentAuthorized(Id Id, DateTime AuthorizedOn);
 record PaymentRefunded(Id Id, DateTime RefundedOn);
-
 
 record InitiateApplicationRequest(string FirstName, string LastName, string Email);
 record InviteUboRequest(string FirstName, string LastName, string Email);

@@ -9,14 +9,14 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using O9d.Guard;
 
-public sealed class EventStore : IEventStore
+public sealed class CosmosEventStore : IEventStore
 {
     private static readonly TransactionalBatchItemRequestOptions DefaultBatchOptions = new()
     {
         EnableContentResponseOnWrite = false
     };
 
-    private readonly ILogger<EventStore> _logger;
+    private readonly ILogger<CosmosEventStore> _logger;
     private readonly CosmosClient _cosmosClient;
     private readonly string _databaseName;
     private readonly JsonSerializer _serializer;
@@ -24,11 +24,11 @@ public sealed class EventStore : IEventStore
     private Database _database = null!;
     private Container _container = null!;
 
-    public EventStore(CosmosClient cosmosClient, string databaseName, ILoggerFactory loggerFactory)
+    public CosmosEventStore(CosmosClient cosmosClient, string databaseName, ILoggerFactory loggerFactory)
     {
         _cosmosClient = cosmosClient.NotNull();
         _databaseName = databaseName.NotNullOrWhiteSpace();
-        _logger = loggerFactory.NotNull().CreateLogger<EventStore>();
+        _logger = loggerFactory.NotNull().CreateLogger<CosmosEventStore>();
 
         _serializer = JsonSerializer.Create(SerializerSettings.Default);
     }
