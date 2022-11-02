@@ -1,13 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <RootNamespace>Odyssey</RootNamespace>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="O9d.Guard" Version="0.1.0"/>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.2"/>
-    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.0"/>
-  </ItemGroup>
+    <PropertyGroup>
+        <TargetFrameworks>net5.0;netstandard2.1</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AssemblyName>Odyssey</AssemblyName>
+        <RootNamespace>Odyssey</RootNamespace>
+        <PackageId>Odyssey</PackageId>
+        <Description>Odyssey enables Azure Cosmos DB to be used as an Event Store</Description>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="O9d.Guard" Version="0.1.0"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.2"/>
+        <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.0"/>
+    </ItemGroup>
 </Project>
