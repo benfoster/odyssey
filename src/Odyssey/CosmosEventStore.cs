@@ -16,18 +16,17 @@ public sealed class CosmosEventStore : IEventStore
         EnableContentResponseOnWrite = false
     };
 
-    private readonly ILogger<CosmosEventStore> _logger;
+    private readonly CosmosEventStoreOptions _options;
     private readonly CosmosClient _cosmosClient;
-    private readonly string _databaseName;
+    private readonly ILogger<CosmosEventStore> _logger;
     private readonly JsonSerializer _serializer;
-
     private Database _database = null!;
     private Container _container = null!;
 
-    public CosmosEventStore(CosmosClient cosmosClient, string databaseName, ILoggerFactory loggerFactory)
+    public CosmosEventStore(CosmosEventStoreOptions options, CosmosClient cosmosClient, ILoggerFactory loggerFactory)
     {
+        _options = options.NotNull(nameof(options));
         _cosmosClient = cosmosClient.NotNull();
-        _databaseName = databaseName.NotNullOrWhiteSpace();
         _logger = loggerFactory.NotNull().CreateLogger<CosmosEventStore>();
 
         _serializer = JsonSerializer.Create(SerializerSettings.Default);
@@ -38,18 +37,27 @@ public sealed class CosmosEventStore : IEventStore
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var throughputProperties = ThroughputProperties.CreateAutoscaleThroughput(1000); // TODO configurable
-
-        var databaseResponse = await _cosmosClient.CreateDatabaseIfNotExistsAsync(_databaseName, throughputProperties, cancellationToken: cancellationToken);
-
-        _database = databaseResponse.Database;
+        if (_options.AutoCreateDatabase)
+        {
+            var databaseResponse = await _cosmosClient.CreateDatabaseIfNotExistsAsync(_options.DatabaseId, _options.DatabaseThroughputProperties, cancellationToken: cancellationToken);
+            _database = databaseResponse.Database;
+        }
+        else
+        {
+            _database = _cosmosClient.GetDatabase(_options.DatabaseId); // Does not guarantee existence
+        }
 
         cancellationToken.ThrowIfCancellationRequested();
-        var containerResponse = await CreateContainerIfNotExists(_database, cancellationToken);
 
-        _container = containerResponse.Container;
-
-        //cancellationToken.ThrowIfCancellationRequested();
+        if (_options.AutoCreateContainer)
+        {
+            var containerResponse = await CreateContainerIfNotExists(_database, cancellationToken);
+            _container = containerResponse.Container;
+        }
+        else
+        {
+            _container = _database.GetContainer(_options.ContainerId); // Does not guarantee existence
+        }
 
         // await Task.WhenAll(
         //     SetDatabaseOfferThroughput(),
@@ -74,13 +82,8 @@ public sealed class CosmosEventStore : IEventStore
                         new ExcludedPath {Path = "/metadata/*"}
                     }
             },
-            //DefaultTimeToLive = collectionOptions.DefaultTimeToLive,
             PartitionKeyPath = "/stream_id"
         };
-
-        // TODO
-        // return database.CreateContainerIfNotExistsAsync(collectionProperties,
-        //     collectionOptions.CollectionRequestUnits);
 
         return database.CreateContainerIfNotExistsAsync(containerProperties, cancellationToken: cancellationToken);
     }

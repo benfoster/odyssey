@@ -13,7 +13,8 @@ builder.Services.Configure<JsonOptions>(
 var app = builder.Build();
 
 using CosmosClient client = CreateClient(builder.Configuration);
-var eventStore = new CosmosEventStore(client, "odyssey", app.Services.GetRequiredService<ILoggerFactory>());
+
+var eventStore = new CosmosEventStore(new CosmosEventStoreOptions(), client, app.Services.GetRequiredService<ILoggerFactory>());
 
 await eventStore.Initialize();
 
