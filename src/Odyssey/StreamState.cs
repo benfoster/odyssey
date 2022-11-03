@@ -5,7 +5,7 @@ namespace Odyssey;
 /// </summary>
 public readonly struct StreamState : IEquatable<StreamState>, IComparable<StreamState>, IComparable
 {
-    public readonly long _value;
+    private readonly long _value;
 
     private StreamState(long value)
     {

@@ -19,7 +19,9 @@
 [] How to reduce the interval between acquiring a new lease
 [] Support idempotence based on Event ID - ref https://developers.eventstore.com/clients/dotnet/5.0/appending.html#idempotence
 [] AppendToStreamAtVersion should throw wrong version exception
+    - ConcurrencyException doesn't make sense in most cases
 [x] It would be helpful to return the event number/combined id (as metadata?)
 [] Optimise for the append only (non versioning) use-case
     [] Here the metadata item might be a better approach since subsequent writes don't depend on its state
 [x] Return immediately if events.count == 0
+[ ] When querying for events we can check the query response and return a static empty list immediately rather than awaiting the result
