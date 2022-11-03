@@ -10,11 +10,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<JsonOptions>(
     opt => opt.SerializerOptions.PropertyNamingPolicy = new JsonSnakeCaseNamingPolicy());
 
+builder.Services.AddOdyssey(cosmosClientFactory: _ => CreateClient(builder.Configuration));
+
 var app = builder.Build();
 
 using CosmosClient client = CreateClient(builder.Configuration);
 
-var eventStore = new CosmosEventStore(new CosmosEventStoreOptions(), client, app.Services.GetRequiredService<ILoggerFactory>());
+IEventStore eventStore = app.Services.GetRequiredService<IEventStore>();
 
 await eventStore.Initialize();
 

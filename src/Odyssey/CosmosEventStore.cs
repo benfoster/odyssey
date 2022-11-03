@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using O9d.Guard;
 
@@ -23,9 +24,10 @@ public sealed class CosmosEventStore : IEventStore
     private Database _database = null!;
     private Container _container = null!;
 
-    public CosmosEventStore(CosmosEventStoreOptions options, CosmosClient cosmosClient, ILoggerFactory loggerFactory)
+    public CosmosEventStore(IOptions<CosmosEventStoreOptions> options, CosmosClient cosmosClient, ILoggerFactory loggerFactory)
     {
-        _options = options.NotNull(nameof(options));
+        options.NotNull(nameof(options));
+        _options = options.Value.NotNull(nameof(options.Value));
         _cosmosClient = cosmosClient.NotNull();
         _logger = loggerFactory.NotNull().CreateLogger<CosmosEventStore>();
 
