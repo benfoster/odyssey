@@ -6,7 +6,7 @@ Odyssey enables Azure Cosmos DB to be used as an Event Store.
 
 ### Register Odyssey at startup:
 
-```
+```c#
 builder.Services.AddOdyssey(cosmosClientFactory: _ => CreateClient(builder.Configuration));
 
 static CosmosClient CreateClient(IConfiguration configuration)
