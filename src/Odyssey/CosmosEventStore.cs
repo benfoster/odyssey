@@ -53,7 +53,7 @@ public sealed class CosmosEventStore : IEventStore
 
         if (_options.AutoCreateContainer)
         {
-            var containerResponse = await CreateContainerIfNotExists(_database, cancellationToken);
+            var containerResponse = await CreateContainerIfNotExists(_database, _options.ContainerId, cancellationToken);
             _container = containerResponse.Container;
         }
         else
@@ -67,11 +67,11 @@ public sealed class CosmosEventStore : IEventStore
         // );
     }
 
-    private static Task<ContainerResponse> CreateContainerIfNotExists(Database database, CancellationToken cancellationToken)
+    private static Task<ContainerResponse> CreateContainerIfNotExists(Database database, string containerId, CancellationToken cancellationToken)
     {
         var containerProperties = new ContainerProperties()
         {
-            Id = "events", // TODO make configurable
+            Id = containerId,
             IndexingPolicy = new IndexingPolicy
             {
                 IncludedPaths =
