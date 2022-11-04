@@ -12,16 +12,16 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
         _eventStore = eventStore.NotNull();
     }
 
-    public Task<bool> Exists<T>(TId id, CancellationToken cancellationToken = default) where T : IAggregate<TId>
+    public Task<bool> Exists<T>(TId id, CancellationToken cancellationToken = default) where T : IAggregate<TId>, new()
     {
         throw new NotImplementedException();
     }
 
-    public async Task<T> GetById<T>(TId id, CancellationToken cancellationToken = default) where T : IAggregate<TId>
+    public async Task<T> GetById<T>(TId id, CancellationToken cancellationToken = default) where T : IAggregate<TId>, new()
     {
         string streamId = id?.ToString() ?? throw new ArgumentException("The string representation of the aggregate ID cannot be null", nameof(id));
 
-        var aggregate = Activator.CreateInstance<T>(); // TODO alternative to reflection
+        var aggregate = new T(); // TODO alternative to reflection
 
         IReadOnlyCollection<EventData> events
             = await _eventStore.ReadStream(streamId, ReadDirection.Forwards, StreamPosition.Start, cancellationToken);

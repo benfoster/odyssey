@@ -34,3 +34,7 @@ tools/**
 
 artifacts/
 BenchmarkDotNet.Artifacts/
+
+# VS
+
+.vs
