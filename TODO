@@ -25,3 +25,4 @@
     [] Here the metadata item might be a better approach since subsequent writes don't depend on its state
 [x] Return immediately if events.count == 0
 [ ] When querying for events we can check the query response and return a static empty list immediately rather than awaiting the result
+[] Aggregate exists support

@@ -24,6 +24,8 @@ public class Application : Aggregate<Id>
         return application;
     }
 
+    public Application() { }
+
     public void Start(string ipAddress)
     {
         Raise(new ApplicationStarted(Id, ipAddress, DateTime.UtcNow));

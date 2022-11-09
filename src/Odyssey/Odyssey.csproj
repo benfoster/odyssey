@@ -13,5 +13,6 @@
         <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.0"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[5.0,7.0)"/>
         <PackageReference Include="Microsoft.Extensions.Options" Version="[5.0,7.0)"/>
+        <PackageReference Include="OneOf" Version="[3.0.160, 4.0)"/>
     </ItemGroup>
 </Project>

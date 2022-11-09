@@ -12,11 +12,6 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
         _eventStore = eventStore.NotNull();
     }
 
-    public Task<bool> Exists<T>(TId id, CancellationToken cancellationToken = default) where T : IAggregate<TId>, new()
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<T> GetById<T>(TId id, CancellationToken cancellationToken = default) where T : IAggregate<TId>, new()
     {
         string streamId = id?.ToString() ?? throw new ArgumentException("The string representation of the aggregate ID cannot be null", nameof(id));
