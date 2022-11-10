@@ -1,3 +1,4 @@
+using ApiExample;
 using ApiExample.Onboarding;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Azure.Cosmos;
@@ -21,6 +22,8 @@ IEventStore eventStore = app.Services.GetRequiredService<IEventStore>();
 await eventStore.Initialize();
 
 var repository = new AggregateRepository<Id>(eventStore);
+
+Task<IResult> NotFoundTask = Task.FromResult(Results.NotFound());
 
 app.MapPost("/payments", async (PaymentRequest payment) =>
 {
@@ -83,34 +86,32 @@ app.MapPost("onboarding/applications", async (InitiateApplicationRequest applica
 
 app.MapPost("onboarding/applications/{id}/start", async (Id id, HttpContext httpContext) =>
 {
-    var application = await repository.GetById<Application>(id);
-    if (application is null)
-    {
-        // How to handle nulls - Aggregate.Empty?
-        return Results.NotFound();
-    }
-    else
-    {
-        application.Start(httpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown");
-        await repository.Save(application);
-        return Results.Accepted();
-    }
+    var result = await repository.GetById<Application>(id);
+
+    return await result.Match(
+        async application =>
+        {
+            application.Start(httpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown");
+            await repository.Save(application);
+            return Results.Accepted();
+        },
+        _ => NotFoundTask
+    );
 });
 
 app.MapPost("onboarding/applications/{id}/ubos", async (Id id, InviteUboRequest uboRequest) =>
 {
-    var application = await repository.GetById<Application>(id);
-    if (application is null)
-    {
-        // How to handle nulls - Aggregate.Empty?
-        return Results.NotFound();
-    }
-    else
-    {
-        application.InviteUbo(uboRequest.FirstName, uboRequest.LastName, uboRequest.Email);
-        await repository.Save(application);
-        return Results.Accepted();
-    }
+    var result = await repository.GetById<Application>(id);
+
+    return await result.Match(
+        async application =>
+        {
+            application.InviteUbo(uboRequest.FirstName, uboRequest.LastName, uboRequest.Email);
+            await repository.Save(application);
+            return Results.Accepted();
+        },
+        _ => NotFoundTask
+    );
 });
 
 app.Run();
