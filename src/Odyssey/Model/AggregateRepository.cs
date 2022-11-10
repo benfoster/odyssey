@@ -3,12 +3,9 @@ namespace Odyssey.Model;
 using System.Threading.Tasks;
 using O9d.Guard;
 using OneOf;
-using OneOf.Types;
 
 public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
 {
-    private readonly static NotFound NotFound = new();
-
     private readonly IEventStore _eventStore;
 
     public AggregateRepository(IEventStore eventStore)
@@ -16,7 +13,7 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
         _eventStore = eventStore.NotNull();
     }
 
-    public async Task<OneOf<T, NotFound>> GetById<T>(TId id, CancellationToken cancellationToken = default) where T : IAggregate<TId>, new()
+    public async Task<OneOf<T, AggregateNotFound>> GetById<T>(TId id, CancellationToken cancellationToken = default) where T : IAggregate<TId>, new()
     {
         string streamId = id?.ToString() ?? throw new ArgumentException("The string representation of the aggregate ID cannot be null", nameof(id));
 
@@ -27,7 +24,7 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
 
         if (events.Count == 0)
         {
-            return NotFound;
+            return AggregateNotFound.Instance;
         }
 
         foreach (var @event in events)
