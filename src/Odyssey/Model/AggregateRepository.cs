@@ -17,7 +17,7 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
     {
         string streamId = id?.ToString() ?? throw new ArgumentException("The string representation of the aggregate ID cannot be null", nameof(id));
 
-        var aggregate = new T(); // TODO alternative to reflection
+        var aggregate = new T();
 
         IReadOnlyCollection<EventData> events
             = await _eventStore.ReadStream(streamId, ReadDirection.Forwards, StreamPosition.Start, cancellationToken);
@@ -35,7 +35,7 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
         return aggregate;
     }
 
-    public async Task Save(IAggregate<TId> aggregate, CancellationToken cancellationToken = default)
+    public async Task<OneOf<Success, UnexpectedStreamState>> Save(IAggregate<TId> aggregate, CancellationToken cancellationToken = default)
     {
         aggregate.NotNull();
         string streamId = aggregate.Id?.ToString() ?? throw new ArgumentException("The aggregate ID cannot be null", nameof(aggregate));
@@ -44,7 +44,7 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
         if (aggregateEvents.Count == 0)
         {
             aggregate.CommitPendingEvents();
-            return;
+            return Success.Instance;
         }
 
         var eventsToStore = new List<EventData>();
@@ -53,8 +53,10 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
             eventsToStore.Add(CreateEventData(@event));
         }
 
-        await _eventStore.AppendToStream(streamId, eventsToStore.AsReadOnly(), StreamState.AtVersion(aggregate.LastVersion), cancellationToken);
+        var result = await _eventStore.AppendToStream(streamId, eventsToStore.AsReadOnly(), StreamState.AtVersion(aggregate.LastVersion), cancellationToken);
         aggregate.CommitPendingEvents();
+
+        return result;
     }
 
     // TODO allow metadata to be provided

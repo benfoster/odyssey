@@ -28,39 +28,49 @@ Task<IResult> NotFoundTask = Task.FromResult(Results.NotFound());
 app.MapPost("/payments", async (PaymentRequest payment) =>
 {
     var initiated = new PaymentInitiated(Id.NewId("pay"), payment.Amount, payment.Currency, payment.Reference);
-    await eventStore.AppendToStream(initiated.Id.ToString(), new[] { Map(initiated) }, StreamState.NoStream);
 
-    return Results.Ok(new
-    {
-        initiated.Id,
-        Status = "initiated"
-    });
+    var result = await eventStore.AppendToStream(initiated.Id.ToString(), new[] { Map(initiated) }, StreamState.NoStream);
+
+    return result.Match(
+        success => Results.Ok(new
+        {
+            initiated.Id,
+            Status = "initiated"
+        }),
+        unexpected => Results.Conflict()
+    );
 });
 
 app.MapPost("/payments/{id}/authorize", async (Id id) =>
 {
     var authorized = new PaymentAuthorized(id, DateTime.UtcNow);
     // Pass the expected stream revision
-    await eventStore.AppendToStream(authorized.Id.ToString(), new[] { Map(authorized) }, StreamState.AtVersion(0));
+    var result = await eventStore.AppendToStream(authorized.Id.ToString(), new[] { Map(authorized) }, StreamState.AtVersion(0));
 
-    return Results.Ok(new
-    {
-        authorized.Id,
-        Status = "authorized"
-    });
+    return result.Match(
+        success => Results.Ok(new
+        {
+            authorized.Id,
+            Status = "authorized"
+        }),
+        unexpected => Results.Conflict()
+    );
 });
 
 app.MapPost("/payments/{id}/refunds", async (Id id) =>
 {
     var refunded = new PaymentRefunded(id, DateTime.UtcNow);
     // Add the event, regardless of the state/revision of stream
-    await eventStore.AppendToStream(refunded.Id.ToString(), new[] { Map(refunded) }, StreamState.StreamExists);
+    var result = await eventStore.AppendToStream(refunded.Id.ToString(), new[] { Map(refunded) }, StreamState.StreamExists);
 
-    return Results.Ok(new
-    {
-        refunded.Id,
-        Status = "refunded"
-    });
+    return result.Match(
+        success => Results.Ok(new
+        {
+            refunded.Id,
+            Status = "refunded"
+        }),
+        unexpected => Results.Conflict()
+    );
 });
 
 app.MapGet("/events/{id}", async (string id, [Microsoft.AspNetCore.Mvc.FromQuery] ReadDirection? direction) =>
@@ -76,12 +86,9 @@ app.MapPost("onboarding/applications", async (InitiateApplicationRequest applica
     var application =
         Application.Initiate(platformId, applicationRequest.Email, applicationRequest.FirstName, applicationRequest.LastName);
 
-    await repository.Save(application);
+    var result = await repository.Save(application);
 
-    return Results.Ok(new
-    {
-        application.Id
-    });
+    return result.Match(success => Results.Ok(new { application.Id }), unexpected => Results.Conflict());
 });
 
 app.MapPost("onboarding/applications/{id}/start", async (Id id, HttpContext httpContext) =>
@@ -92,8 +99,9 @@ app.MapPost("onboarding/applications/{id}/start", async (Id id, HttpContext http
         async application =>
         {
             application.Start(httpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown");
-            await repository.Save(application);
-            return Results.Accepted();
+            var result = await repository.Save(application);
+
+            return result.Match(success => Results.Accepted(), unexpected => Results.Conflict());
         },
         _ => NotFoundTask
     );
@@ -107,8 +115,9 @@ app.MapPost("onboarding/applications/{id}/ubos", async (Id id, InviteUboRequest 
         async application =>
         {
             application.InviteUbo(uboRequest.FirstName, uboRequest.LastName, uboRequest.Email);
-            await repository.Save(application);
-            return Results.Accepted();
+            var result = await repository.Save(application);
+
+            return result.Match(success => Results.Accepted(), unexpected => Results.Conflict());
         },
         _ => NotFoundTask
     );

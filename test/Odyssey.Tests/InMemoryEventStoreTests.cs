@@ -25,41 +25,34 @@ public class InMemoryEventStoreTests
     }
 
     [Fact]
-    public async Task Throws_when_stream_should_not_exist()
+    public async Task Returns_unexpected_when_stream_should_not_exist_but_does()
     {
         var streamId = Guid.NewGuid().ToString();
+        await _eventStore.AppendToStream(streamId, new[] { Map(new TestEvent()) }, StreamState.NoStream);
 
-        var @event = new TestEvent();
-
-        Task appendTask(StreamState state) => _eventStore.AppendToStream(streamId, new[] { Map(new TestEvent()) }, state);
-        await appendTask(StreamState.Any);
-
-        await Assert.ThrowsAsync<ConcurrencyException>(() => appendTask(StreamState.NoStream));
+        var result = await _eventStore.AppendToStream(streamId, new[] { Map(new TestEvent()) }, StreamState.NoStream);
+        result.Value.ShouldBeOfType<UnexpectedStreamState>();
     }
 
     [Fact]
-    public async Task Throws_when_stream_should_exist()
+    public async Task Returns_unexpected_when_stream_should_exist_but_doesnt()
     {
         var streamId = Guid.NewGuid().ToString();
-
-        await Assert.ThrowsAsync<ConcurrencyException>(
-            () => _eventStore.AppendToStream(streamId, new[] { Map(new TestEvent()) }, StreamState.StreamExists)
-        );
+        var result = await _eventStore.AppendToStream(streamId, new[] { Map(new TestEvent()) }, StreamState.StreamExists);
+        result.Value.ShouldBeOfType<UnexpectedStreamState>();
     }
 
     [Fact]
-    public async Task Throws_when_stream_not_at_expected_version()
+    public async Task Returns_unexpected_stream_not_at_expected_version()
     {
         var streamId = Guid.NewGuid().ToString();
 
-        var @event = new TestEvent();
-
-        Task appendTask(StreamState state) => _eventStore.AppendToStream(streamId, new[] { Map(new TestEvent()) }, state);
-        await appendTask(StreamState.Any);
-        await appendTask(StreamState.AtVersion(0));
+        await _eventStore.AppendToStream(streamId, new[] { Map(new TestEvent()) }, StreamState.NoStream);
+        await _eventStore.AppendToStream(streamId, new[] { Map(new TestEvent()) }, StreamState.StreamExists);
+        var result = await _eventStore.AppendToStream(streamId, new[] { Map(new TestEvent()) }, StreamState.AtVersion(0));
         // Stream now at 1
 
-        await Assert.ThrowsAsync<ConcurrencyException>(() => appendTask(StreamState.AtVersion(0)));
+        result.Value.ShouldBeOfType<UnexpectedStreamState>();
     }
 
     [Fact]

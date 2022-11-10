@@ -10,6 +10,8 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using O9d.Guard;
 
+using AppendResult = OneOf.OneOf<Success, UnexpectedStreamState>;
+
 public sealed class CosmosEventStore : IEventStore
 {
     private static readonly TransactionalBatchItemRequestOptions DefaultBatchOptions = new()
@@ -90,34 +92,27 @@ public sealed class CosmosEventStore : IEventStore
         return database.CreateContainerIfNotExistsAsync(containerProperties, cancellationToken: cancellationToken);
     }
 
-    public async Task AppendToStream(string streamId, IReadOnlyList<EventData> events, StreamState expectedState, CancellationToken cancellationToken = default)
+    public async Task<AppendResult> AppendToStream(string streamId, IReadOnlyList<EventData> events, StreamState expectedState, CancellationToken cancellationToken = default)
     {
         streamId.NotNullOrWhiteSpace();
         events.NotNull();
 
         if (events.Count == 0)
         {
-            return;
+            return Success.Instance;
         }
 
         _logger.LogDebug("Append to stream {ExpectedState}@{StreamId}.", expectedState, streamId);
 
-        try
+        var result = expectedState switch
         {
-            Task<TransactionalBatchResponse> appendTask = expectedState switch
-            {
-                { } when expectedState == StreamState.NoStream => AppendToNewStream(streamId, events, cancellationToken),
-                { } when expectedState == StreamState.StreamExists => AppendToExistingStreamAnyVersion(streamId, events, cancellationToken),
-                { } when expectedState == StreamState.Any => AppendToStreamAnyState(streamId, events, cancellationToken),
-                _ => AppendToStreamAtVersion(streamId, events, expectedState, true, cancellationToken)
-            };
+            { } when expectedState == StreamState.NoStream => AppendToNewStream(streamId, events, cancellationToken),
+            { } when expectedState == StreamState.StreamExists => AppendToExistingStreamAnyVersion(streamId, events, cancellationToken),
+            { } when expectedState == StreamState.Any => AppendToStreamAnyState(streamId, events, cancellationToken),
+            _ => AppendToStreamAtVersion(streamId, events, expectedState, true, cancellationToken)
+        };
 
-            _ = await appendTask;
-        }
-        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.Conflict || ex.Headers["x-ms-substatus"] == "409" || ex.SubStatusCode == 409)
-        {
-            throw new ConcurrencyException($"Concurrency conflict when appending to stream {streamId}.", ex);
-        }
+        return await result;
     }
 
     /// <summary>
@@ -125,7 +120,7 @@ public sealed class CosmosEventStore : IEventStore
     /// We're able to validate that the stream does not exist by writing the first event 0@{StreamId}
     /// If the stream exists, this event would exist and therefore the CreateItem operation would fail
     /// </summary>
-    private async Task<TransactionalBatchResponse> AppendToNewStream(string streamId, IReadOnlyList<EventData> events, CancellationToken cancellationToken)
+    private async Task<AppendResult> AppendToNewStream(string streamId, IReadOnlyList<EventData> events, CancellationToken cancellationToken)
     {
         TransactionalBatch batch = _container.CreateTransactionalBatch(new PartitionKey(streamId));
 
@@ -136,16 +131,16 @@ public sealed class CosmosEventStore : IEventStore
 
         using var batchResponse = await batch.ExecuteAsync(cancellationToken);
 
-        return batchResponse.IsSuccessStatusCode
-            ? batchResponse
-            : throw batchResponse.StatusCode switch
-            {
-                HttpStatusCode.Conflict => new CosmosException(
-                    $"Stream '{streamId}' already exists",
-                    HttpStatusCode.Conflict, 0, batchResponse.ActivityId, batchResponse.RequestCharge),
-                _ => new CosmosException(batchResponse.ErrorMessage, batchResponse.StatusCode, 0,
-                    batchResponse.ActivityId, batchResponse.RequestCharge)
-            };
+        if (batchResponse.IsSuccessStatusCode)
+        {
+            return Success.Instance;
+        }
+        else if (batchResponse.StatusCode == HttpStatusCode.Conflict)
+        {
+            return new UnexpectedStreamState(StreamState.NoStream);
+        }
+
+        throw new CosmosException(batchResponse.ErrorMessage, batchResponse.StatusCode, 0, batchResponse.ActivityId, batchResponse.RequestCharge);
     }
 
 
@@ -153,13 +148,13 @@ public sealed class CosmosEventStore : IEventStore
     /// To append to an *existing* stream at any state we need to first obtain the current version (must be >= 0)
     /// Then we can append using current version as expected version
     /// </summary>
-    private async Task<TransactionalBatchResponse> AppendToExistingStreamAnyVersion(string streamId, IReadOnlyList<EventData> events, CancellationToken cancellationToken)
+    private async Task<AppendResult> AppendToExistingStreamAnyVersion(string streamId, IReadOnlyList<EventData> events, CancellationToken cancellationToken)
     {
-        long currentState = await GetCurrentState(streamId, cancellationToken);
+        StreamState currentState = await GetCurrentState(streamId, cancellationToken);
 
         if (currentState == StreamState.NoStream)
         {
-            throw new ConcurrencyException($"Stream '{streamId}' does not exist"); // Should use a specific exception type
+            return new UnexpectedStreamState(StreamState.StreamExists);
         }
 
         return await AppendToStreamAtVersion(streamId, events, currentState, false, cancellationToken);
@@ -168,16 +163,16 @@ public sealed class CosmosEventStore : IEventStore
     /// <summary>
     /// To append to a stream in any state we need to obtain the current version (last event) of the stream
     /// </summary>
-    private async Task<TransactionalBatchResponse> AppendToStreamAnyState(string streamId, IReadOnlyList<EventData> events, CancellationToken cancellationToken)
+    private async Task<AppendResult> AppendToStreamAnyState(string streamId, IReadOnlyList<EventData> events, CancellationToken cancellationToken)
     {
-        long currentVersion = await GetCurrentState(streamId, cancellationToken);
-        return await AppendToStreamAtVersion(streamId, events, currentVersion, false, cancellationToken);
+        StreamState currentState = await GetCurrentState(streamId, cancellationToken);
+        return await AppendToStreamAtVersion(streamId, events, currentState, false, cancellationToken);
     }
 
     /// <summary>
     /// Gets the current state of the stream
     /// </summary>
-    private async Task<long> GetCurrentState(string streamId, CancellationToken cancellationToken)
+    private async Task<StreamState> GetCurrentState(string streamId, CancellationToken cancellationToken)
     {
         const string sql = @"
             SELECT value COUNT(e.id) 
@@ -211,7 +206,7 @@ public sealed class CosmosEventStore : IEventStore
     ///     * The expected version does not exist
     ///     * The stream has been updated and one of the events to append would override existing events
     /// </summary>
-    private async Task<TransactionalBatchResponse> AppendToStreamAtVersion(string streamId, IReadOnlyList<EventData> events, long version, bool validateVersion, CancellationToken cancellationToken = default)
+    private async Task<AppendResult> AppendToStreamAtVersion(string streamId, IReadOnlyList<EventData> events, StreamState version, bool validateVersion, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Append to stream at {Version}@{StreamId}.", version, streamId);
 
@@ -238,16 +233,16 @@ public sealed class CosmosEventStore : IEventStore
 
         using var batchResponse = await batch.ExecuteAsync(cancellationToken);
 
-        return batchResponse.IsSuccessStatusCode
-            ? batchResponse
-            : throw batchResponse.StatusCode switch
-            {
-                HttpStatusCode.Conflict => new CosmosException(
-                    $"Stream '{streamId}' is not at the expected version '{version}'",
-                    HttpStatusCode.Conflict, 0, batchResponse.ActivityId, batchResponse.RequestCharge),
-                _ => new CosmosException(batchResponse.ErrorMessage, batchResponse.StatusCode, 0,
-                    batchResponse.ActivityId, batchResponse.RequestCharge)
-            };
+        if (batchResponse.IsSuccessStatusCode)
+        {
+            return Success.Instance;
+        }
+        else if (batchResponse.StatusCode == HttpStatusCode.Conflict)
+        {
+            return new UnexpectedStreamState(version);
+        }
+
+        throw new CosmosException(batchResponse.ErrorMessage, batchResponse.StatusCode, 0, batchResponse.ActivityId, batchResponse.RequestCharge);
     }
 
     public async Task<IReadOnlyCollection<EventData>> ReadStream(string streamId, ReadDirection direction, StreamPosition position, CancellationToken cancellationToken = default)

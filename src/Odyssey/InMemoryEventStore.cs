@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using O9d.Guard;
 
+using AppendResult = OneOf.OneOf<Success, UnexpectedStreamState>;
+
 public class InMemoryEventStore : IEventStore
 {
     private static readonly IReadOnlyCollection<EventData> EmptyStream = Array.Empty<EventData>();
@@ -13,31 +15,33 @@ public class InMemoryEventStore : IEventStore
 
     public Task Initialize(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    public Task AppendToStream(string streamId, IReadOnlyList<EventData> events, StreamState expectedState, CancellationToken cancellationToken = default)
+    public Task<AppendResult> AppendToStream(string streamId, IReadOnlyList<EventData> events, StreamState expectedState, CancellationToken cancellationToken = default)
     {
         streamId.NotNullOrWhiteSpace();
         events.NotNull();
 
         bool exists = _streams.TryGetValue(streamId, out List<EventData>? stream);
 
+        static Task<AppendResult> Failed(StreamState state) => Task.FromResult<AppendResult>(new UnexpectedStreamState(state));
+
         switch (expectedState)
         {
             case { } when expectedState == StreamState.NoStream:
                 if (exists)
                 {
-                    throw new ConcurrencyException("Stream expectation failed. Stream should not exist");
+                    return Failed(expectedState);
                 }
                 break;
             case { } when expectedState == StreamState.StreamExists:
                 if (!exists)
                 {
-                    throw new ConcurrencyException("Stream expectation failed. Stream should exist");
+                    return Failed(expectedState);
                 }
                 break;
             case { } when expectedState >= 0:
                 if ((stream!.Count - 1) != expectedState)
                 {
-                    throw new ConcurrencyException($"Stream expectation failed. Expected version {expectedState}. Actual version {stream.Count - 1}.");
+                    return Failed(expectedState);
                 }
                 break;
         }
@@ -57,7 +61,7 @@ public class InMemoryEventStore : IEventStore
             stream.Add(@event);
         }
 
-        return Task.CompletedTask;
+        return Task.FromResult<AppendResult>(Success.Instance);
     }
 
     public Task<IReadOnlyCollection<EventData>> ReadStream(string streamId, ReadDirection direction, StreamPosition position, CancellationToken cancellationToken = default)
