@@ -23,15 +23,19 @@ You can provide a factory to create and register the underlying `CosmosClient` i
 ### Take a dependency on `IEventStore`
 
 ```c#
-app.MapPost("/payments", async (IEventStore eventStore, PaymentRequest payment) =>
+app.MapPost("/payments", async (PaymentRequest payment) =>
 {
     var initiated = new PaymentInitiated(Id.NewId("pay"), payment.Amount, payment.Currency, payment.Reference);
-    await eventStore.AppendToStream(initiated.Id.ToString(), new[] { Map(initiated) }, StreamState.NoStream);
 
-    return Results.Ok(new
-    {
-        initiated.Id,
-        Status = "initiated"
-    });
+    var result = await eventStore.AppendToStream(initiated.Id.ToString(), new[] { Map(initiated) }, StreamState.NoStream);
+
+    return result.Match(
+        success => Results.Ok(new
+        {
+            initiated.Id,
+            Status = "initiated"
+        }),
+        unexpected => Results.Conflict()
+    );
 });
 ```
