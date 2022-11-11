@@ -1,8 +1,8 @@
 namespace Odyssey.Model;
+using OneOf;
 
 public interface IAggregateRepository<TId>
 {
-    Task<T> GetById<T>(TId id, CancellationToken cancellationToken) where T : IAggregate<TId>, new();
-    Task Save(IAggregate<TId> aggregate, CancellationToken cancellationToken);
-    Task<bool> Exists<T>(TId id, CancellationToken cancellationToken) where T : IAggregate<TId>, new();
+    Task<OneOf<T, AggregateNotFound>> GetById<T>(TId id, CancellationToken cancellationToken) where T : IAggregate<TId>, new();
+    Task<OneOf<Success, UnexpectedStreamState>> Save(IAggregate<TId> aggregate, CancellationToken cancellationToken);
 }
