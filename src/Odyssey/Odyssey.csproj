@@ -4,7 +4,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <AssemblyName>Odyssey</AssemblyName>
         <RootNamespace>Odyssey</RootNamespace>
-        <PackageId>Odyssey</PackageId>
+        <PackageId>O9d.Odyssey</PackageId>
         <Description>Odyssey enables Azure Cosmos DB to be used as an Event Store</Description>
     </PropertyGroup>
     <ItemGroup>
