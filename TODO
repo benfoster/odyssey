@@ -18,8 +18,6 @@
 [x] Include full Clr type, name and qualified name without version in metadata - include just the name for now
 [] How to reduce the interval between acquiring a new lease
 [] Support idempotence based on Event ID - ref https://developers.eventstore.com/clients/dotnet/5.0/appending.html#idempotence
-[] AppendToStreamAtVersion should throw wrong version exception
-    - ConcurrencyException doesn't make sense in most cases
 [x] It would be helpful to return the event number/combined id (as metadata?)
 [] Optimise for the append only (non versioning) use-case
     [] Here the metadata item might be a better approach since subsequent writes don't depend on its state
