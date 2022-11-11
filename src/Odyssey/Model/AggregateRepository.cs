@@ -54,7 +54,11 @@ public sealed class AggregateRepository<TId> : IAggregateRepository<TId>
         }
 
         var result = await _eventStore.AppendToStream(streamId, eventsToStore.AsReadOnly(), StreamState.AtVersion(aggregate.LastVersion), cancellationToken);
-        aggregate.CommitPendingEvents();
+
+        if (result.IsT0)
+        {
+            aggregate.CommitPendingEvents();
+        }
 
         return result;
     }
