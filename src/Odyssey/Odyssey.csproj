@@ -8,11 +8,15 @@
         <Description>Odyssey enables Azure Cosmos DB to be used as an Event Store</Description>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="O9d.Guard" Version="0.1.0"/>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.2"/>
-        <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.0"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[5.0,8.0)"/>
-        <PackageReference Include="Microsoft.Extensions.Options" Version="[5.0,8.0)"/>
-        <PackageReference Include="OneOf" Version="[3.0.160, 4.0)"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="O9d.Guard" Version="0.1.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.2" />
+        <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.31.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[5.0,8.0)" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="[5.0,8.0)" />
+        <PackageReference Include="OneOf" Version="[3.0.160, 4.0)" />
     </ItemGroup>
 </Project>
