@@ -1,14 +1,11 @@
-namespace Odyssey;
-
-using System.Collections.Generic;
 using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using O9d.Guard;
+
+namespace Odyssey;
 
 using AppendResult = OneOf.OneOf<Success, UnexpectedStreamState>;
 
@@ -43,8 +40,16 @@ public sealed class CosmosEventStore : IEventStore
 
         if (_options.AutoCreateDatabase)
         {
-            var databaseResponse = await _cosmosClient.CreateDatabaseIfNotExistsAsync(_options.DatabaseId, _options.DatabaseThroughputProperties, cancellationToken: cancellationToken);
-            _database = databaseResponse.Database;
+            if (_options.DatabaseThroughputProperties is not null)
+            {
+                var databaseResponse = await _cosmosClient.CreateDatabaseIfNotExistsAsync(_options.DatabaseId, _options.DatabaseThroughputProperties, cancellationToken: cancellationToken);
+                _database = databaseResponse.Database;
+            }
+            else
+            {
+                var databaseResponse = await _cosmosClient.CreateDatabaseIfNotExistsAsync(_options.DatabaseId, cancellationToken: cancellationToken);
+                _database = databaseResponse.Database;
+            }
         }
         else
         {
@@ -62,11 +67,6 @@ public sealed class CosmosEventStore : IEventStore
         {
             _container = _database.GetContainer(_options.ContainerId); // Does not guarantee existence
         }
-
-        // await Task.WhenAll(
-        //     SetDatabaseOfferThroughput(),
-        //     SetCollectionOfferThroughput()
-        // );
     }
 
     private static Task<ContainerResponse> CreateContainerIfNotExists(Database database, string containerId, CancellationToken cancellationToken)
