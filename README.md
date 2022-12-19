@@ -39,3 +39,38 @@ app.MapPost("/payments", async (PaymentRequest payment, IEventStore eventStore) 
     );
 });
 ```
+
+## Configuration
+
+By default Odyssey will attempt to create a Cosmos Database named `odyssey` and container named `events`.
+
+You can control these settings as well as the auto-create settings using the .NET configuration system, for example, in `appsettings.json`:
+
+```json
+  "Odyssey": {
+    "DatabaseId": "payments",
+    "ContainerId": "payment-events",
+    "AutoCreateDatabase": false,
+    "AutoCreateContainer": false
+  },
+```
+
+To initialize Odyssey with these settings, pass the relevant configuration section to Odyssey during initialization:
+
+```c#
+builder.Services.AddOdyssey(
+    configureOptions: options => options.DatabaseThroughputProperties = ThroughputProperties.CreateAutoscaleThroughput(1000),
+    cosmosClientFactory: _ => CreateClient(builder.Configuration),
+    builder.Configuration.GetSection("Odyssey")
+);
+
+static CosmosClient CreateClient(IConfiguration configuration)
+{
+    return new(
+        accountEndpoint: configuration["Cosmos:Endpoint"],
+        authKeyOrResourceToken: configuration["Cosmos:Token"]
+    );
+}
+```
+
+Note that this also demonstrates how to specify the throughput properties of the created Container.

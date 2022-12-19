@@ -1,4 +1,3 @@
-using ApiExample;
 using ApiExample.Onboarding;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Azure.Cosmos;
@@ -14,8 +13,6 @@ builder.Services.Configure<JsonOptions>(
 builder.Services.AddOdyssey(cosmosClientFactory: _ => CreateClient(builder.Configuration));
 
 var app = builder.Build();
-
-using CosmosClient client = CreateClient(builder.Configuration);
 
 IEventStore eventStore = app.Services.GetRequiredService<IEventStore>();
 
