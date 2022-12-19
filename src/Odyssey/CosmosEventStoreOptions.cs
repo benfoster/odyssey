@@ -10,13 +10,11 @@ public class CosmosEventStoreOptions
         AutoCreateDatabase = true;
         ContainerId = "events";
         AutoCreateContainer = true;
-
-        DatabaseThroughputProperties = ThroughputProperties.CreateAutoscaleThroughput(1000);
     }
 
     public string DatabaseId { get; set; }
     public bool AutoCreateDatabase { get; set; }
-    public ThroughputProperties DatabaseThroughputProperties { get; set; }
     public string ContainerId { get; set; }
     public bool AutoCreateContainer { get; set; }
+    public ThroughputProperties? DatabaseThroughputProperties { get; set; }
 }
