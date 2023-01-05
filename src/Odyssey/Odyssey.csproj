@@ -20,5 +20,6 @@
         <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="[5.0,8.0)"/>
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="[5.0,8.0)"/>
         <PackageReference Include="OneOf" Version="[3.0.160, 4.0)"/>
+        <PackageReference Include="MinVer" Version="4.2.0" PrivateAssets="All"/>
     </ItemGroup>
 </Project>
